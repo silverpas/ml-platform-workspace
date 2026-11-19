@@ -42,6 +42,22 @@ ruff check .                # check code style
 mlflow ui --backend-store-uri sqlite:///mlflow.db --port 8080   # browse runs at localhost:8080
 ```
 
+## Try the whole flow on GitHub (no Azure needed)
+
+The **Demo pipeline** workflow runs train → approval → scoring on GitHub's own
+computers:
+
+1. Open the **Actions** tab → *Demo pipeline (no Azure)* → **Run workflow**.
+2. When training is done, the run page shows the new model next to the
+   current champion, and the decision.
+3. If the new model is better, the run pauses at **Review deployments**:
+   a reviewer approves or rejects.
+4. After approval, the model becomes champion and the predictions can be
+   downloaded from the run page.
+
+To see a second model compete, change a setting under `model.params` in
+`config.yml` and push.
+
 ## Folders
 
 | Path | What it is | Change it for a new use case? |
@@ -54,8 +70,8 @@ mlflow ui --backend-store-uri sqlite:///mlflow.db --port 8080   # browse runs at
 | [`infra/`](infra/README.md) | Terraform module, used by the platform team | No |
 | `docs/` | Platform design document | No |
 | `CLAUDE.md` | Rules for AI coding assistants | No |
+| [`.github/workflows/`](.github/workflows/README.md) | Automatic checks on every push, and the demo flow with the approval gate | No |
 | `jobs/`, `environment/` | Azure ML job files and packages | *coming next* |
-| `.github/workflows/` | Tests on every push, training, approval gate | *coming later* |
 
 Created locally and never committed: `data/`, `outputs/`, `mlflow.db`, `mlruns/`, `.venv/`.
 

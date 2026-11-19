@@ -61,6 +61,35 @@ def load_champion(model_name: str) -> tuple[Any, str] | tuple[None, None]:
     return model, str(version.version)
 
 
+def summary_markdown(evaluation: dict[str, Any]) -> str:
+    """A short Markdown report of the comparison, e.g. for the GitHub run page."""
+    metric = evaluation["primary_metric"]
+    new, champion = evaluation["new_metrics"], evaluation["champion_metrics"]
+    champion_label = (
+        f"Champion (v{evaluation['champion_version']})" if champion else "Champion (none yet)"
+    )
+
+    lines = [
+        "## Model evaluation",
+        "",
+        f"| Metric | New model | {champion_label} |",
+        "|---|---|---|",
+    ]
+    for name, value in new.items():
+        label = f"**{name}** (decides)" if name == metric else name
+        current = f"{champion[name]:.3f}" if champion else "–"
+        lines.append(f"| {label} | {value:.3f} | {current} |")
+
+    if evaluation["is_candidate"]:
+        decision = "✅ **Better than the champion: registered as candidate, waiting for approval.**"
+        if not champion:
+            decision = "✅ **First model: registered as candidate, waiting for approval.**"
+    else:
+        decision = "⏹️ **Not better than the champion: not registered, nothing to approve.**"
+    lines += ["", decision, ""]
+    return "\n".join(lines)
+
+
 def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     parser.add_argument("--config", default="config.yml", help="Settings file")
@@ -106,17 +135,17 @@ def main(argv: list[str] | None = None) -> None:
         mlflow.set_tag("is_candidate", str(candidate))
         mlflow.set_tag("compared_with_champion_version", str(champion_version))
 
-    write_json(
-        {
-            **run_info,
-            "primary_metric": metric,
-            "new_metrics": new_metrics,
-            "champion_version": champion_version,
-            "champion_metrics": champion_metrics,
-            "is_candidate": candidate,
-        },
-        args.out,
-    )
+    evaluation = {
+        **run_info,
+        "primary_metric": metric,
+        "new_metrics": new_metrics,
+        "champion_version": champion_version,
+        "champion_metrics": champion_metrics,
+        "is_candidate": candidate,
+    }
+    write_json(evaluation, args.out)
+    # Same result as a readable table (shown on the GitHub run page).
+    Path(args.out).with_suffix(".md").write_text(summary_markdown(evaluation))
     champion_text = (
         f"champion v{champion_version} = {champion_metrics[metric]:.3f}"
         if champion_metrics

@@ -17,7 +17,7 @@ import argparse
 
 import mlflow
 
-from src.common import load_config, read_json, setup_mlflow
+from src.common import load_config, read_json, setup_mlflow, write_json
 from src.evaluate import CHAMPION_ALIAS
 
 CANDIDATE_ALIAS = "candidate"
@@ -48,6 +48,9 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser.add_argument(
         "--evaluation", default="outputs/evaluation.json", help="Written by evaluate"
     )
+    parser.add_argument(
+        "--out", default="outputs/registration.json", help="Which version was registered"
+    )
     parser.add_argument("--promote", metavar="VERSION", help="Make this version the champion")
     return parser.parse_args(argv)
 
@@ -64,6 +67,8 @@ def main(argv: list[str] | None = None) -> None:
         return
 
     version = register_candidate(read_json(args.evaluation), model_name)
+    # Tells the next step (e.g. the approval job on GitHub) which version to approve.
+    write_json({"model_name": model_name, "version": version}, args.out)
     if version is None:
         print("Not registered: the new model is not better than the champion.")
     else:

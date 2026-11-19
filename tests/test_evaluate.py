@@ -4,7 +4,7 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from src.evaluate import compute_metrics, is_better
+from src.evaluate import compute_metrics, is_better, summary_markdown
 
 
 def test_first_model_is_always_a_candidate():
@@ -39,3 +39,29 @@ def test_compute_metrics_threshold_changes_predictions():
     y_proba = np.array([0.3, 0.4])
     assert compute_metrics(y_true, y_proba, threshold=0.5)["recall"] == 0.0
     assert compute_metrics(y_true, y_proba, threshold=0.35)["recall"] == 1.0
+
+
+def make_evaluation(is_candidate: bool, champion: bool) -> dict:
+    metrics = {"average_precision": 0.8, "roc_auc": 0.9}
+    return {
+        "primary_metric": "average_precision",
+        "new_metrics": metrics,
+        "champion_version": "1" if champion else None,
+        "champion_metrics": {"average_precision": 0.7, "roc_auc": 0.85} if champion else None,
+        "is_candidate": is_candidate,
+    }
+
+
+def test_summary_shows_both_models_and_decision():
+    text = summary_markdown(make_evaluation(is_candidate=True, champion=True))
+    assert "Champion (v1)" in text
+    assert "| **average_precision** (decides) | 0.800 | 0.700 |" in text
+    assert "waiting for approval" in text
+
+
+def test_summary_first_model_and_rejected_model():
+    first = summary_markdown(make_evaluation(is_candidate=True, champion=False))
+    assert "Champion (none yet)" in first and "First model" in first
+
+    rejected = summary_markdown(make_evaluation(is_candidate=False, champion=True))
+    assert "not registered" in rejected

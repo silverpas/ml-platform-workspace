@@ -25,7 +25,7 @@ src/            prep.py, train.py, evaluate.py, register.py, score.py
 jobs/           train-register.yml, batch-score.yml   (Azure ML CLI v2 job specs)
 environment/    conda.yml
 tests/
-.github/workflows/  ci.yml, train.yml, deploy.yml
+.github/workflows/  ci.yml, demo.yml (no Azure), train.yml, deploy.yml
 infra/modules/ml-project/   Terraform module (azurerm), one block per use case
 data/           local data only, git-ignored
 ```

@@ -24,7 +24,9 @@ def test_full_pipeline(config_path: Path):
     first = run_train_and_evaluate(config)
     assert first["is_candidate"] is True
     assert first["champion_version"] is None
+    assert "First model" in Path("outputs/evaluation.md").read_text()
     register.main(["--config", config])
+    assert read_json("outputs/registration.json")["version"] == "1"
 
     # Human approval: promote version 1 to champion.
     register.main(["--config", config, "--promote", "1"])
