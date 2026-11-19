@@ -1,0 +1,50 @@
+# --- Python ---
+__pycache__/
+*.py[cod]
+*.egg-info/
+.eggs/
+build/
+dist/
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.coverage
+htmlcov/
+.ipynb_checkpoints/
+
+# --- Virtual environments ---
+.venv/
+venv/
+
+# --- Local secrets / env files ---
+.env
+.env.*
+
+# --- MLflow (local tracking) ---
+mlruns/
+mlartifacts/
+
+# --- Local data (never commit data) ---
+data/
+
+# --- Terraform ---
+.terraform/
+*.tfstate
+*.tfstate.*
+*.tfplan
+crash.log
+crash.*.log
+override.tf
+override.tf.json
+*_override.tf
+*_override.tf.json
+.terraformrc
+terraform.rc
+
+# --- Documents ---
+*.pdf
+
+# --- OS / editor ---
+.DS_Store
+.vscode/
+.idea/
