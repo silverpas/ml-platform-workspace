@@ -49,6 +49,8 @@ data/           local data only, git-ignored
   only marks it as a candidate if it is better on the same test set.
 - Small, focused functions with type hints and short docstrings.
 - Tests for data prep and evaluation logic; no tests that need Azure.
+- Prefer simple and readable over clever. This template must be easy for
+  people who are new to ML to understand.
 
 ## Commands
 
@@ -65,11 +67,3 @@ terraform -chdir=infra/modules/ml-project validate
 ```
 
 Update this section when commands change.
-
-## How to work with me
-
-- I'm learning MLOps: after each change, explain briefly what you did and why.
-- Work in **small milestones**. Propose a plan first, implement one milestone,
-  then stop and wait for my review.
-- Prefer simple and readable over clever. This template must be easy for
-  people who are new to ML to understand.

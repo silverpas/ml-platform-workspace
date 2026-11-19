@@ -16,6 +16,9 @@ htmlcov/
 .venv/
 venv/
 
+# --- Personal Claude Code preferences ---
+CLAUDE.local.md
+
 # --- Local secrets / env files ---
 .env
 .env.*
