@@ -13,7 +13,8 @@ Machine Learning. Every new ML use case will start from it. The full design is i
 - **Never run `terraform apply`** or create cloud resources. `terraform fmt` and
   `terraform validate` are fine.
 - **Everything must run locally first**, without an Azure account: local MLflow
-  tracking (`./mlruns`) and local files. Azure is an optional second mode.
+  tracking (`sqlite:///mlflow.db` for runs and registry, model files in `./mlruns`)
+  and local files. Azure is an optional second mode.
 - Ask before adding a new dependency.
 
 ## Target structure
@@ -25,10 +26,16 @@ jobs/           train-register.yml, batch-score.yml   (Azure ML CLI v2 job specs
 environment/    conda.yml
 tests/
 .github/workflows/  ci.yml, train.yml, deploy.yml
-infra/modules/ml-project/   Terraform module (azurerm)
-notebooks/      fabric_batch_score.ipynb
+infra/modules/ml-project/   Terraform module (azurerm), one block per use case
 data/           local data only, git-ignored
 ```
+
+- **Scoring runs in Azure ML** (design doc option B): `jobs/batch-score.yml` runs
+  `src/score.py` and writes predictions to a Fabric lakehouse. Fabric PREDICT
+  (option A) is not part of the template.
+- **Department workspaces are not in this repo.** The platform team creates one
+  Azure ML workspace per department; `ml-project` only plugs a use case into it.
+- `terraform test` with the mock provider is fine (no Azure, nothing is created).
 
 ## Tech choices
 
@@ -55,15 +62,22 @@ data/           local data only, git-ignored
 ## Commands
 
 ```bash
-python -m venv .venv && source .venv/bin/activate
+brew install libomp          # macOS only: LightGBM needs it
+python3.11 -m venv .venv && source .venv/bin/activate
 pip install -r requirements.txt
-python -m src.prep --out data/processed
+python -m src.prep --out data/processed      # downloads AI4I if missing
 python -m src.train --data data/processed
+python -m src.evaluate                        # writes outputs/evaluation.json
+python -m src.register                        # registers as "candidate" if better
+python -m src.register --promote <version>    # approve: set "champion"
+python -m src.score --input data/raw/ai4i2020.csv --output outputs/predictions.parquet
 pytest
-ruff check .
-mlflow ui --port 8080        # view runs locally
-terraform -chdir=infra/modules/ml-project fmt
+ruff check . && ruff format --check .
+mlflow ui --backend-store-uri sqlite:///mlflow.db --port 8080   # view runs locally
+terraform -chdir=infra/modules/ml-project fmt -recursive
+terraform -chdir=infra/modules/ml-project init -backend=false
 terraform -chdir=infra/modules/ml-project validate
+terraform -chdir=infra/modules/ml-project test   # mock provider, no Azure
 ```
 
 Update this section when commands change.

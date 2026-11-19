@@ -26,12 +26,16 @@ CLAUDE.local.md
 # --- MLflow (local tracking) ---
 mlruns/
 mlartifacts/
+mlflow.db
 
-# --- Local data (never commit data) ---
+# --- Local data and pipeline outputs (never commit data) ---
 data/
+outputs/
 
 # --- Terraform ---
 .terraform/
+# Module only: the platform repo that uses it keeps its own lock file.
+.terraform.lock.hcl
 *.tfstate
 *.tfstate.*
 *.tfplan

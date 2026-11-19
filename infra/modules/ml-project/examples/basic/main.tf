@@ -1,0 +1,44 @@
+# Example: how the platform team adds ONE use case in its own Terraform repo.
+# This file is only an example: it is validated, never applied from this template.
+
+terraform {
+  required_version = ">= 1.7"
+
+  required_providers {
+    azurerm = {
+      source  = "hashicorp/azurerm"
+      version = "~> 4.81"
+    }
+  }
+}
+
+# Login and subscription come from the environment (ARM_* variables / az login),
+# never from this file.
+provider "azurerm" {
+  features {}
+}
+
+module "ml_machine_failure" {
+  source = "../.."
+
+  department  = "manufacturing"
+  name        = "machine-fail"
+  owner       = "maintenance-analytics-team"     # replace with the real owner
+  github_repo = "example-org/ml-machine-failure" # replace with the real repo
+  gpu         = false
+
+  # The department workspace, created once by the platform team.
+  workspace_name                = "[department workspace]"
+  workspace_resource_group_name = "[department resource group]"
+}
+
+output "github_variables" {
+  description = "Values to set as GitHub repository variables."
+  value = {
+    AZURE_CLIENT_ID        = module.ml_machine_failure.azure_client_id
+    AZURE_TENANT_ID        = module.ml_machine_failure.azure_tenant_id
+    AZURE_SUBSCRIPTION_ID  = module.ml_machine_failure.azure_subscription_id
+    AZUREML_WORKSPACE      = module.ml_machine_failure.workspace_name
+    AZUREML_RESOURCE_GROUP = module.ml_machine_failure.resource_group_name
+  }
+}
