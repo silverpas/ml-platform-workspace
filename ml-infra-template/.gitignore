@@ -1,0 +1,25 @@
+# --- Terraform ---
+.terraform/
+# Modules do not commit a lock file: the platform repo that uses them keeps its own.
+.terraform.lock.hcl
+*.tfstate
+*.tfstate.*
+*.tfplan
+crash.log
+crash.*.log
+override.tf
+override.tf.json
+*_override.tf
+*_override.tf.json
+.terraformrc
+terraform.rc
+
+# --- Local settings ---
+.env
+.env.*
+CLAUDE.local.md
+
+# --- OS / editor ---
+.DS_Store
+.vscode/
+.idea/

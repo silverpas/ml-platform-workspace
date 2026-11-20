@@ -36,7 +36,7 @@ All resources are tagged with `department`, `use_case` and `owner`.
 1. **GitHub variables.** Set these in the project repo under
    *Settings → Secrets and variables → Actions → Variables*. They are IDs, not secrets:
    `AZURE_CLIENT_ID`, `AZURE_TENANT_ID`, `AZURE_SUBSCRIPTION_ID`,
-   `AZUREML_WORKSPACE`, `AZUREML_RESOURCE_GROUP` (from the module outputs).
+   `AZURE_RESOURCE_GROUP`, `AZURE_ML_WORKSPACE` (from the module outputs).
 2. **Fabric access (manual for now).** Fabric permissions are not managed by
    the `azurerm` provider. In Fabric, give the identity (`principal_id` output):
    - **Viewer** on the workspace that holds the input data;
@@ -45,9 +45,9 @@ All resources are tagged with `department`, `use_case` and `owner`.
 ## Test it locally (no Azure needed)
 
 ```bash
-terraform -chdir=infra/modules/ml-project init -backend=false
-terraform -chdir=infra/modules/ml-project validate
-terraform -chdir=infra/modules/ml-project test
+terraform -chdir=modules/ml-project init -backend=false
+terraform -chdir=modules/ml-project validate
+terraform -chdir=modules/ml-project test
 ```
 
 `terraform test` uses a **mock provider**: a fake Azure that makes a plan and

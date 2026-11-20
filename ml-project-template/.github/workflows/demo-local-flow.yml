@@ -1,4 +1,10 @@
-# DEMO MODE: the full model flow on GitHub's own computers, without Azure.
+# DEMO ONLY, NOT THE PRODUCTION PIPELINE.
+# The full model flow on GitHub's own computers, without Azure: a way to see
+# the approval gate work before your project has Azure access. Production uses
+# train.yml → deploy.yml → score.yml, which run in Azure ML.
+#
+# Safe to delete once your project runs in Azure. It needs the GitHub
+# environment "approval-demo" with required reviewers (Settings → Environments).
 #
 #   1. train   prep → train → evaluate → register as "candidate"
 #              → results table on the run page
@@ -12,7 +18,7 @@
 # or settings. Tip: change a model setting in config.yml and see whether the
 # new model beats the champion.
 
-name: Demo pipeline (no Azure)
+name: Demo flow (no Azure, not production)
 
 on:
   workflow_dispatch:

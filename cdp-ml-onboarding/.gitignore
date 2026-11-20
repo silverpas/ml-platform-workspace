@@ -1,0 +1,23 @@
+# --- Terraform ---
+.terraform/
+# This is an example only. The real platform repo commits its own lock file.
+.terraform.lock.hcl
+*.tfstate
+*.tfstate.*
+*.tfplan
+crash.log
+crash.*.log
+override.tf
+override.tf.json
+*_override.tf
+*_override.tf.json
+
+# --- Local settings ---
+.env
+.env.*
+CLAUDE.local.md
+
+# --- OS / editor ---
+.DS_Store
+.vscode/
+.idea/

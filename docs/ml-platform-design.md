@@ -17,7 +17,9 @@ This design proposes **self-service with control**:
 - one simple **intake process** from idea to running model;
 - one **platform pattern**: data in Fabric, ML in Azure Machine Learning;
 - two **templates** so every new use case starts from the same place:
-  a GitHub repo template (code) and a Terraform module (infrastructure).
+  a GitHub repo template (code) and Terraform modules (infrastructure);
+- a **request repo** as the front door, and an **onboarding example** that shows
+  what the platform repo gets per use case (see section 5).
 
 ## 2. Principles
 
@@ -38,7 +40,7 @@ This design proposes **self-service with control**:
 | Step | What happens | Who | Output | Runs on |
 |---|---|---|---|---|
 | **0. Explore** (optional) | Try the idea, no request needed | Anyone | An idea worth a request | Fabric *(in place)*, playground workspace *(proposed)* |
-| **1. Request** | Describe problem, value and how predictions will be used | Requester | Request file | GitHub *(proposed)* |
+| **1. Request** | Describe problem, value and how predictions will be used | Requester | Request issue (form) | GitHub, `ml-requests` repo *(proposed)* |
 | **2. Qualify** | Is there value? Is ML the right tool? Owner and risk tier | Platform lead + requester | Go: project set up | Terraform module + repo from template *(proposed)* |
 | **3. Data and priority** | Is the data in the platform? If not, raise a data request | Platform lead, data owners | Data access, priority | Fabric data domains *(in place)*, data intake *(proposed)* |
 | **4. Build** | Project from template: train, register, approval gate | Model owner and team | Approved model version | Azure ML *(proposed)*, GitHub template *(proposed)* |
@@ -70,14 +72,20 @@ This design proposes **self-service with control**:
 Fabric data (versioned snapshot)
   → Training (Azure ML job, MLflow tracking)
   → Approval gate (Azure ML registry, owner + reviewer)
-  → Scoring: A) Fabric PREDICT  or  B) Azure ML batch job
+  → Scoring: Azure ML batch job, nightly (default; optional: Fabric PREDICT)
   → Predictions table (Fabric lakehouse)
   → Power BI (existing reports)
 ```
 
 ### 4.3 Scoring options
 
-| | A. Score in Fabric | B. Score in Azure ML |
+**Default: B, batch scoring in Azure ML.** A nightly GitHub workflow (`score.yml`)
+submits the `batch-score` job; it loads the approved model version from the
+registry, scores the input data and writes the predictions to the predictions
+lakehouse, passed to the job as an output path. Option A stays available as an
+**optional** notebook for teams that prefer to score inside Fabric.
+
+| | A. Score in Fabric *(optional)* | B. Score in Azure ML *(default)* |
 |---|---|---|
 | How | Approved model copied to the Fabric registry, scored with `PREDICT` next to the data | Azure ML batch job reads data from OneLake and writes predictions back |
 | Good for | Tabular models (scikit-learn, LightGBM, XGBoost) | Deep learning, GPU, models PREDICT can't handle |
@@ -96,21 +104,31 @@ Every training run logs which data it used:
   e.g. `Files/ml/<use-case>/<date>/`. Needed when Azure ML reads through the OneLake
   datastore (Files folder only), and safer for long-term reproducibility.
 
-## 5. Templates
+## 5. Repos and templates
+
+Four repos, each with an `AGENTS.md` for its users and their AI agents:
+
+| Repo | Purpose | Steps | Users |
+|---|---|---|---|
+| `ml-requests` | Request form (GitHub issue) and process | 1-3 | Requesters, platform lead |
+| `ml-infra-template` | Terraform modules `ml-workspace`, `ml-project` | 2-3 | Platform engineers |
+| `cdp-ml-onboarding` | Example of what the platform repo gets per use case | 2-3 | Platform team, platform lead |
+| `ml-project-template` | Code template, one repo per use case | 4-5 | Model owner and team |
 
 ### 5.1 GitHub template repo (one repo per use case)
 
 ```
-ml-project/
-├── README.md                  # how to use this repo
-├── AGENTS.md                  # same instructions, for AI agents
-├── model-request.yml          # the intake request
+ml-project-template/
+├── README.md, AGENTS.md       # how to use this repo, for people and AI agents
 ├── model-card.md              # owner, purpose, data version, metrics, approvals
+├── config.yml                 # all settings
 ├── src/                       # prep, train, evaluate, register, score
 ├── jobs/                      # Azure ML job definitions: train-register, batch-score
 ├── environment/conda.yml      # Python packages the jobs need
+├── notebooks/                 # optional: scoring in Fabric (option A)
 ├── tests/
-└── .github/workflows/         # ci, train, deploy (deploy waits for approval)
+└── .github/workflows/         # ci, train, deploy (waits for approval), score (nightly),
+                               # review-reminder (quarterly), demo-local-flow (demo, no Azure)
 ```
 
 | Part | Question it answers |
@@ -118,32 +136,44 @@ ml-project/
 | `src/` | What runs |
 | `environment/` | With which packages |
 | `jobs/` | Where and how it runs (script, data, compute) |
-| `.github/workflows/` | When it runs (on PR, on demand, after approval) |
+| `.github/workflows/` | When it runs (on PR, on demand, after approval, nightly) |
 
 Notes:
 - Deployment uses a **GitHub environment with required reviewers**: that is the approval gate.
 - Shared CI/CD logic should live in **one central repo of reusable workflows**,
   so improvements reach every project.
 - GitHub authenticates to Azure with **OIDC** (federated credentials), no stored secrets.
+  The project repo only knows the infrastructure by name, through GitHub variables:
+  `AZURE_CLIENT_ID`, `AZURE_TENANT_ID`, `AZURE_SUBSCRIPTION_ID`,
+  `AZURE_RESOURCE_GROUP`, `AZURE_ML_WORKSPACE`.
+- The repo contains **no Terraform**: infrastructure exists before the project starts.
 
-### 5.2 Terraform module (one block per use case)
+### 5.2 Terraform modules
+
+`ml-workspace`, **once per department**: Azure ML workspace with storage, key
+vault, Application Insights, a CPU cluster that scales to 0, and an optional GPU cluster.
+
+`ml-project`, **one block per use case**, added in the platform repo:
 
 ```hcl
-module "ml_example_case" {
-  source      = "./modules/ml-project"
-  department  = "manufacturing"
-  name        = "example-case"
-  owner       = "[owner]"
-  github_repo = "[org]/ml-example-case"
-  gpu         = false
+module "ml_tool_wear" {
+  source       = "./modules/ml-project"
+  department   = "manufacturing"
+  name         = "tool-wear"
+  owner        = "[owner]"
+  github_repo  = "[org]/ml-tool-wear"
+  gpu          = false
   data_domains = ["[data domain]"]
 }
 ```
 
 It creates:
-- access to the department's Azure ML workspace and compute (GPU on request);
-- an identity for this repo's GitHub workflows;
-- read access to the platform data, write access to a predictions lakehouse.
+- an Entra ID group with a limited data-scientist role on the department's
+  workspace (never Owner or Contributor);
+- a workload identity for this repo's GitHub workflows, trusting only that repo;
+- read access to the platform data, write access to a predictions lakehouse
+  (placeholders until the Fabric side is clear);
+- outputs: the IDs the project repo needs as GitHub variables.
 
 GPU **quota** is a separate request to Microsoft; Terraform can only use it once granted.
 The module's exact design must follow how the platform team already structures Terraform.
@@ -173,13 +203,19 @@ The module's exact design must follow how the platform team already structures T
 - Retirement criteria for models (e.g. no predictions consumed for X months).
 - Which environments (dev/test/prod) are needed, and when?
 
-## 9. First milestone for this repo
+## 9. Build order for this workspace
 
-Build the template skeleton and test it **locally on public data**, using the
+All four repos are built in one workspace first, tested **locally on public
+data** using the
 [AI4I 2020 Predictive Maintenance dataset](https://archive.ics.uci.edu/dataset/601/ai4i+2020+predictive+maintenance+dataset)
-(machine sensor data with failure labels): prep → train → evaluate → register → score,
-tracked with local MLflow. Then add the Azure ML job definitions, the GitHub workflows,
-the Terraform module (validated, not applied) and a Fabric scoring notebook.
+(machine sensor data with failure labels):
+
+1. Restructure into the four folders.
+2. Project template: prep → train → evaluate → register → score, tracked with local MLflow.
+3. Project template: Azure ML job definitions, environment, GitHub workflows.
+4. Terraform modules (validated, not applied).
+5. Platform repo onboarding example.
+6. Request form and process.
 
 ## 10. References
 

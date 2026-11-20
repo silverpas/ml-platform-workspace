@@ -1,96 +1,45 @@
-# ML project template
+# ML platform workspace
 
-A starting point for every new machine learning use case on a Fabric data
-platform with Azure Machine Learning. One GitHub repo per use case: create it
-from this template, swap the example for your own data, and keep the rest.
+Building blocks for doing machine learning on a Fabric data platform with
+Azure Machine Learning, in a controlled, repeatable way. The design is in
+[docs/ml-platform-design.md](docs/ml-platform-design.md).
 
-The example inside predicts **machine failures** from sensor readings, using
-the public [AI4I 2020 Predictive Maintenance dataset](https://archive.ics.uci.edu/dataset/601/ai4i+2020+predictive+maintenance+dataset).
+This repo is a development workspace. Each of the four folders will become
+its own GitHub repo, so each one is self-contained.
 
-## How a model goes from data to report
-
-```
-Fabric lakehouse (training data snapshot)
-  → Azure ML: prep → train → evaluate        only a better model continues
-  → registered as "candidate"
-  → reviewer approves in GitHub               the model becomes "champion"
-  → Azure ML: batch scoring with the champion
-  → Fabric lakehouse (predictions table) → Power BI
-```
-
-Everything also runs **on your laptop**, without Azure: local files instead of
-the lakehouse, and a local MLflow store instead of the Azure ML workspace.
-The full design is in [docs/ml-platform-design.md](docs/ml-platform-design.md).
-
-## Run it locally
-
-Needs Python 3.11. On macOS, LightGBM also needs `brew install libomp`.
-
-```bash
-python3.11 -m venv .venv && source .venv/bin/activate
-pip install -r requirements.txt
-
-python -m src.prep          # download and prepare the data
-python -m src.train         # train a model
-python -m src.evaluate      # compare it with the approved model
-python -m src.register      # register it as "candidate" if it is better
-python -m src.register --promote 1     # approve version 1 as "champion"
-python -m src.score --input data/raw/ai4i2020.csv --output outputs/predictions.parquet
-
-pytest                      # run the tests
-ruff check .                # check code style
-mlflow ui --backend-store-uri sqlite:///mlflow.db --port 8080   # browse runs at localhost:8080
-```
-
-## Try the whole flow on GitHub (no Azure needed)
-
-The **Demo pipeline** workflow runs train → approval → scoring on GitHub's own
-computers:
-
-1. Open the **Actions** tab → *Demo pipeline (no Azure)* → **Run workflow**.
-2. When training is done, the run page shows the new model next to the
-   current champion, and the decision.
-3. If the new model is better, the run pauses at **Review deployments**:
-   a reviewer approves or rejects.
-4. After approval, the model becomes champion and the predictions can be
-   downloaded from the run page.
-
-To see a second model compete, change a setting under `model.params` in
-`config.yml` and push.
-
-## Folders
-
-| Path | What it is | Change it for a new use case? |
+| Folder | What it is | Who uses it |
 |---|---|---|
-| `config.yml` | All settings: data, target column, columns to drop, model, metric | **Yes**, the main place |
-| [`src/`](src/README.md) | The five pipeline steps | Only `prep.py`, if your data needs different cleaning |
-| [`tests/`](tests/README.md) | Automatic checks on fake data | Adapt the fake data, add tests for your cleaning |
-| `requirements.txt` | Python packages with exact versions | Rarely |
-| `pyproject.toml` | Settings for pytest and ruff | No |
-| [`infra/`](infra/README.md) | Terraform module, used by the platform team | No |
-| `docs/` | Platform design document | No |
-| `CLAUDE.md` | Rules for AI coding assistants | No |
-| [`.github/workflows/`](.github/workflows/README.md) | Automatic checks on every push, and the demo flow with the approval gate | No |
-| `jobs/`, `environment/` | Azure ML job files and packages | *coming next* |
+| [`ml-requests/`](ml-requests/README.md) | The front door: request form and process for new ML use cases | Anyone with an idea, platform lead |
+| [`ml-infra-template/`](ml-infra-template/README.md) | Terraform modules: one Azure ML workspace per department, one setup per use case | Platform engineers |
+| [`cdp-ml-onboarding/`](cdp-ml-onboarding/README.md) | Example of what the platform repo (CDP) gets for each new use case | Platform team, platform lead |
+| [`ml-project-template/`](ml-project-template/README.md) | Code template: one repo per use case, from data to approved model to predictions | Data scientists, ML engineers |
 
-Created locally and never committed: `data/`, `outputs/`, `mlflow.db`, `mlruns/`, `.venv/`.
+## How they fit together
 
-## Start a new use case
+```
+ 0. Explore     try the idea anywhere (no request needed)
+ 1. Request     ml-requests: issue form                         → label "new"
+ 2. Qualify     platform lead checks it                         → "approved"
+                ├─ cdp-ml-onboarding: add one ml-project block (module from ml-infra-template)
+                │    → Azure access + login identity for the project
+                └─ new repo from ml-project-template, IDs set as GitHub variables
+ 3. Data        data access granted (Fabric)
+ 4. Build       ml-project-template: train → evaluate → approval gate → champion
+ 5. Run/review  nightly batch scoring in Azure ML → Fabric lakehouse → Power BI;
+                quarterly review: keep, retrain or retire
+```
 
-1. Create a repo from this template ("Use this template" on GitHub).
-2. In `config.yml`, change the `data` section (source, target, columns to drop)
-   and `model.name`.
-3. If your data is not a zipped CSV, or needs other cleaning, adapt
-   `load_raw` / `prepare` in `src/prep.py`.
-4. Change the fake data in `tests/conftest.py` to your columns.
-5. Run the pipeline and `pytest` locally until the tests pass and the metrics make sense.
-6. Ask the platform team to set up Azure for the project (`infra/`).
+## Example used everywhere
 
-## Rules
+- Use case `tool-wear`, department `manufacturing`.
+- Data: the public [AI4I 2020 Predictive Maintenance dataset](https://archive.ics.uci.edu/dataset/601/ai4i+2020+predictive+maintenance+dataset)
+  (UCI Machine Learning Repository, id 601, CC BY 4.0).
 
-- **No secrets** in code, config or commits. Azure login goes through OIDC.
-- **No real company data** in the repo. `data/` is never committed.
-- **A model is used only after approval**: it must beat the current model on
-  the same test set, and a reviewer must approve it.
-- **Every run is traceable**: MLflow records the data fingerprint, the git
-  commit, the settings and the metrics.
+No client names, no real company data, no secrets. Nothing here creates cloud
+resources: Terraform is only formatted, validated and tested against a fake Azure.
+
+## Checks
+
+[`.github/workflows/check-all.yml`](.github/workflows/check-all.yml) runs each
+folder's checks on every push to this workspace. Each folder also has its own
+workflows for when it becomes a separate repo.

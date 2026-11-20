@@ -1,53 +1,33 @@
-# --- Python ---
-__pycache__/
-*.py[cod]
-*.egg-info/
-.eggs/
-build/
-dist/
-.pytest_cache/
-.ruff_cache/
-.mypy_cache/
-.coverage
-htmlcov/
-.ipynb_checkpoints/
-
-# --- Virtual environments ---
-.venv/
-venv/
+# Workspace-level ignores. Each folder also has its own .gitignore, because
+# each folder will become its own repo.
 
 # --- Personal files: Claude Code preferences and private notes ---
 CLAUDE.local.md
 docs/private/
 
-# --- Local secrets / env files ---
+# --- Secrets / env files ---
 .env
 .env.*
 
-# --- MLflow (local tracking) ---
+# --- Python, shared virtual environment at the workspace root ---
+.venv/
+venv/
+__pycache__/
+.pytest_cache/
+.ruff_cache/
+
+# --- Never commit data or local ML state, anywhere ---
+data/
+outputs/
 mlruns/
 mlartifacts/
 mlflow.db
 
-# --- Local data and pipeline outputs (never commit data) ---
-data/
-outputs/
-
-# --- Terraform ---
+# --- Terraform working files, anywhere ---
 .terraform/
-# Module only: the platform repo that uses it keeps its own lock file.
-.terraform.lock.hcl
 *.tfstate
 *.tfstate.*
 *.tfplan
-crash.log
-crash.*.log
-override.tf
-override.tf.json
-*_override.tf
-*_override.tf.json
-.terraformrc
-terraform.rc
 
 # --- Documents ---
 *.pdf

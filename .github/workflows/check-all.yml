@@ -1,0 +1,68 @@
+# WORKSPACE ONLY: runs the checks of every folder on each push.
+# GitHub only runs workflows from the root .github/workflows/, so the folders'
+# own workflows do not run here. They run once each folder is its own repo.
+# This file is not copied into those repos.
+
+name: Check all folders
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  ml-project-template:
+    name: ml-project-template (ruff + pytest)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ml-project-template
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.11"
+          cache: pip
+          cache-dependency-path: ml-project-template/requirements.txt
+
+      - name: Install packages
+        run: pip install -r requirements.txt
+
+      - name: Check code style (ruff)
+        run: |
+          ruff check .
+          ruff format --check .
+
+      - name: Run tests (pytest)
+        run: pytest
+
+  ml-infra-template:
+    name: ml-infra-template (terraform)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ml-infra-template
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: hashicorp/setup-terraform@v4
+        with:
+          terraform_version: "1.17.1"
+
+      - name: Check formatting
+        run: terraform fmt -check -recursive
+
+      # Every module: download providers, validate, test against a fake Azure.
+      - name: Validate and test each module
+        run: |
+          for module in modules/*/; do
+            echo "::group::$module"
+            terraform -chdir="$module" init -backend=false -input=false
+            terraform -chdir="$module" validate
+            terraform -chdir="$module" test
+            echo "::endgroup::"
+          done

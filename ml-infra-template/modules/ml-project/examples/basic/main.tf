@@ -35,10 +35,10 @@ module "ml_machine_failure" {
 output "github_variables" {
   description = "Values to set as GitHub repository variables."
   value = {
-    AZURE_CLIENT_ID        = module.ml_machine_failure.azure_client_id
-    AZURE_TENANT_ID        = module.ml_machine_failure.azure_tenant_id
-    AZURE_SUBSCRIPTION_ID  = module.ml_machine_failure.azure_subscription_id
-    AZUREML_WORKSPACE      = module.ml_machine_failure.workspace_name
-    AZUREML_RESOURCE_GROUP = module.ml_machine_failure.resource_group_name
+    AZURE_CLIENT_ID       = module.ml_machine_failure.azure_client_id
+    AZURE_TENANT_ID       = module.ml_machine_failure.azure_tenant_id
+    AZURE_SUBSCRIPTION_ID = module.ml_machine_failure.azure_subscription_id
+    AZURE_ML_WORKSPACE    = module.ml_machine_failure.workspace_name
+    AZURE_RESOURCE_GROUP  = module.ml_machine_failure.resource_group_name
   }
 }
