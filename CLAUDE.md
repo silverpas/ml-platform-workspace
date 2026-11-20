@@ -67,7 +67,7 @@ python3.11 -m venv .venv && source .venv/bin/activate
 pip install -r requirements.txt
 python -m src.prep && python -m src.train && python -m src.evaluate && python -m src.register
 python -m src.register --promote <version>
-python -m src.score --input data/raw/ai4i2020.csv --output outputs/predictions.parquet
+python -m src.score --input data/raw/ai4i2020.csv --output data/predictions/predictions.parquet
 pytest
 ruff check . && ruff format --check .
 mlflow ui --backend-store-uri sqlite:///mlflow.db --port 8080
@@ -90,7 +90,7 @@ Update this section when commands change.
 ## Milestones
 
 1. Restructure into four folders ✅
-2. `ml-project-template`: local pipeline on AI4I with MLflow and tests
+2. `ml-project-template`: local pipeline on AI4I with MLflow and tests ✅
 3. `ml-project-template`: Azure ML jobs, environment, workflows, notebook, model card
 4. `ml-infra-template`: both modules, validated
 5. `cdp-ml-onboarding`: CDP example and checklist, validated
