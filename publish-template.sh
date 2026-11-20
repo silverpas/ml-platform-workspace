@@ -22,12 +22,14 @@ if [ "$(git branch --show-current)" != "main" ]; then
   exit 1
 fi
 
+# 5. Always delete the temporary branch at the end, even if a step fails.
+trap 'git branch -D template-export >/dev/null 2>&1 || true' EXIT
+
 # 3. Copy the folder's history into a temporary branch.
 git subtree split --prefix=ml-project-template -b template-export
 
-# 4. Push it as main of the template repo. 5. Delete the temporary branch.
+# 4. Push it as main of the template repo.
 git push "$TEMPLATE_REPO" template-export:main
-git branch -D template-export
 
 # 6. Report.
 echo "Published ml-project-template ($(git rev-parse --short HEAD)) to $TEMPLATE_REPO"
