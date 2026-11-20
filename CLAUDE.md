@@ -109,4 +109,5 @@ Update this section when commands change.
 - Work in small milestones: propose a plan, implement one milestone, then stop
   and wait for my review.
 - Prefer simple and readable over clever.
-- Commit after each milestone with a clear message.
+- Commit after each milestone with a clear message. No `Co-Authored-By` or
+  other Claude attribution lines in commit messages.
