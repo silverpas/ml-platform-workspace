@@ -23,6 +23,8 @@ become its own GitHub repo. The design is in @docs/ml-platform-design.md
 - **Whenever you change a folder, update its `AGENTS.md` in the same change.**
 - `.github/workflows/check-all.yml` at the root is for this workspace only: it
   runs each folder's checks. It is not copied into the four repos.
+- `publish-template.sh` at the root is also workspace only: it publishes the
+  `ml-project-template/` folder to its own GitHub template repo.
 
 ## Hard rules (everywhere)
 
@@ -83,6 +85,9 @@ terraform -chdir=cdp-ml-onboarding/ml init -backend=false
 terraform -chdir=cdp-ml-onboarding/ml validate
 
 # ml-requests/: no commands (Markdown and YAML only)
+
+# workspace root: publish ml-project-template/ to its GitHub template repo
+./publish-template.sh
 ```
 
 Update this section when commands change.
