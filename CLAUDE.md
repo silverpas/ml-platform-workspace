@@ -97,7 +97,7 @@ Update this section when commands change.
 1. Restructure into four folders ✅
 2. `ml-project-template`: local pipeline on AI4I with MLflow and tests ✅
 3. `ml-project-template`: Azure ML jobs, environment, workflows, notebook, model card ✅
-4. `ml-infra-template`: both modules, validated
+4. `ml-infra-template`: both modules, validated ✅
 5. `cdp-ml-onboarding`: CDP example and checklist, validated
 6. `ml-requests`: issue form and process docs
 7. Final pass: every `AGENTS.md` matches its folder

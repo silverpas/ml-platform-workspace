@@ -10,5 +10,9 @@ terraform {
       source  = "hashicorp/azurerm"
       version = "~> 4.81"
     }
+    azuread = {
+      source  = "hashicorp/azuread" # Entra ID: only used when create_team_group = true
+      version = "~> 3.10"
+    }
   }
 }

@@ -1,5 +1,5 @@
 # Values the platform team hands to the project team after `terraform apply`.
-# The first four go into the GitHub repo as *variables* (Settings -> Secrets and
+# The first five go into the GitHub repo as *variables* (Settings -> Secrets and
 # variables -> Actions -> Variables). They are IDs, not passwords: OIDC needs no secret.
 
 output "azure_client_id" {
@@ -18,18 +18,33 @@ output "azure_subscription_id" {
 }
 
 output "workspace_name" {
-  description = "GitHub variable AZUREML_WORKSPACE."
+  description = "GitHub variable AZURE_ML_WORKSPACE."
   value       = var.workspace_name
 }
 
 output "resource_group_name" {
-  description = "GitHub variable AZUREML_RESOURCE_GROUP."
+  description = "GitHub variable AZURE_RESOURCE_GROUP."
   value       = var.workspace_resource_group_name
 }
 
 output "compute_name" {
-  description = "Compute cluster to use in jobs/*.yml."
-  value       = azurerm_machine_learning_compute_cluster.project.name
+  description = "Shared cluster to use in the project's jobs/*.yml (compute: azureml:<name>), from ml-workspace."
+  value       = var.gpu ? "gpu-cluster" : "cpu-cluster"
+}
+
+output "team_group_id" {
+  description = "Object ID of the team's Entra ID group, or null when create_team_group = false."
+  value       = var.create_team_group ? azuread_group.team[0].object_id : null
+}
+
+output "fabric_access_todo" {
+  description = "What the platform team must still grant by hand in Fabric (not managed by Terraform yet)."
+  value = {
+    identity_principal_id = azurerm_user_assigned_identity.project.principal_id
+    read_data_domains     = var.data_domains
+    # ASSUMPTION: one predictions lakehouse per department, Contributor access.
+    write_predictions = "Contributor on the ${var.department} predictions lakehouse workspace"
+  }
 }
 
 output "principal_id" {

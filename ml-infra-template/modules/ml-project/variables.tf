@@ -13,12 +13,12 @@ variable "department" {
 }
 
 variable "name" {
-  description = "Short name of the use case, e.g. \"machine-fail\". Max 13 characters because Azure limits compute cluster names to 16 (we add \"cc-\")."
+  description = "Short name of the use case, e.g. \"tool-wear\". The same name as the model, the repo (ml-<name>) and the OneLake folder."
   type        = string
 
   validation {
-    condition     = can(regex("^[a-z][a-z0-9-]{1,11}[a-z0-9]$", var.name))
-    error_message = "name: 3-13 characters, lowercase letters, digits and hyphens, starting with a letter and not ending with a hyphen."
+    condition     = can(regex("^[a-z][a-z0-9-]{1,22}[a-z0-9]$", var.name))
+    error_message = "name: 3-24 characters, lowercase letters, digits and hyphens, starting with a letter and not ending with a hyphen."
   }
 }
 
@@ -54,35 +54,34 @@ variable "workspace_resource_group_name" {
   type        = string
 }
 
-# --- Compute ---
+# --- Compute (the clusters are created by the ml-workspace module) ---
 
 variable "gpu" {
-  description = "true = GPU machines for this project (needs GPU quota from Microsoft first)."
+  description = "true = this project trains on the department's GPU cluster (ml-workspace with gpu = true). Changes only the compute_name output."
   type        = bool
   default     = false
 }
 
-variable "cpu_vm_size" {
-  description = "Machine type when gpu = false."
-  type        = string
-  default     = "Standard_DS3_v2"
+# --- Data (placeholders until the Fabric side is clear) ---
+
+variable "data_domains" {
+  description = "Fabric data domains this project reads, e.g. [\"production\"]. Recorded as a tag and in the fabric_access_todo output; access is granted in Fabric by hand."
+  type        = list(string)
+  default     = []
 }
 
-variable "gpu_vm_size" {
-  description = "Machine type when gpu = true."
-  type        = string
-  default     = "Standard_NC4as_T4_v3"
+# --- Team (optional: needs permission to create Entra ID groups) ---
+
+variable "create_team_group" {
+  description = "true = create an Entra ID group for the project team with the AzureML Data Scientist role on the workspace. Needs permission to create groups (often only IT has it)."
+  type        = bool
+  default     = false
 }
 
-variable "max_nodes" {
-  description = "Most machines the cluster may start at once. It always scales back to 0 when idle."
-  type        = number
-  default     = 2
-
-  validation {
-    condition     = var.max_nodes >= 1 && var.max_nodes <= 10
-    error_message = "max_nodes must be between 1 and 10."
-  }
+variable "team_member_object_ids" {
+  description = "Entra ID object IDs of the team members (only used when create_team_group = true)."
+  type        = list(string)
+  default     = []
 }
 
 # --- GitHub ---

@@ -1,9 +1,9 @@
 # Tests for the ml-project module. Run with:
-#   terraform -chdir=infra/modules/ml-project init -backend=false
-#   terraform -chdir=infra/modules/ml-project test
+#   terraform -chdir=modules/ml-project init -backend=false
+#   terraform -chdir=modules/ml-project test
 #
-# `mock_provider` replaces Azure with a fake: no login, no cost, nothing is created.
-# Each `run` makes a plan and checks what WOULD be created.
+# `mock_provider` replaces Azure and Entra ID with fakes: no login, no cost,
+# nothing is created. Each `run` makes a plan and checks what WOULD be created.
 
 mock_provider "azurerm" {
   # The fake "existing" department workspace the module looks up.
@@ -15,32 +15,24 @@ mock_provider "azurerm" {
   }
 }
 
+mock_provider "azuread" {}
+
 # Shared inputs; single runs override what they test.
 variables {
   department                    = "manufacturing"
-  name                          = "machine-fail"
+  name                          = "tool-wear"
   owner                         = "maintenance-analytics-team"
-  github_repo                   = "example-org/ml-machine-failure"
+  github_repo                   = "example-org/ml-tool-wear"
   workspace_name                = "mlw-manufacturing"
   workspace_resource_group_name = "rg-ml-manufacturing"
 }
 
-run "cpu_by_default" {
+run "uses_the_shared_cpu_cluster_by_default" {
   command = plan
 
   assert {
-    condition     = azurerm_machine_learning_compute_cluster.project.vm_size == "Standard_DS3_v2"
-    error_message = "Without gpu = true the cluster should use the CPU machine type."
-  }
-
-  assert {
-    condition     = azurerm_machine_learning_compute_cluster.project.scale_settings[0].min_node_count == 0
-    error_message = "The cluster must scale to 0 machines so it costs nothing when idle."
-  }
-
-  assert {
-    condition     = azurerm_machine_learning_compute_cluster.project.name == "cc-machine-fail"
-    error_message = "Unexpected compute cluster name."
+    condition     = output.compute_name == "cpu-cluster"
+    error_message = "Without gpu = true the project should use the shared CPU cluster."
   }
 }
 
@@ -52,8 +44,8 @@ run "gpu_on_request" {
   }
 
   assert {
-    condition     = azurerm_machine_learning_compute_cluster.project.vm_size == "Standard_NC4as_T4_v3"
-    error_message = "With gpu = true the cluster should use the GPU machine type."
+    condition     = output.compute_name == "gpu-cluster"
+    error_message = "With gpu = true the project should use the shared GPU cluster."
   }
 }
 
@@ -61,12 +53,12 @@ run "github_can_only_log_in_from_this_repo" {
   command = plan
 
   assert {
-    condition     = azurerm_federated_identity_credential.github_main.subject == "repo:example-org/ml-machine-failure:ref:refs/heads/main"
+    condition     = azurerm_federated_identity_credential.github_main.subject == "repo:example-org/ml-tool-wear:ref:refs/heads/main"
     error_message = "Training login must be limited to the main branch of this repo."
   }
 
   assert {
-    condition     = azurerm_federated_identity_credential.github_deploy.subject == "repo:example-org/ml-machine-failure:environment:production"
+    condition     = azurerm_federated_identity_credential.github_deploy.subject == "repo:example-org/ml-tool-wear:environment:production"
     error_message = "Deploy login must be limited to the approval-gated environment of this repo."
   }
 }
@@ -82,6 +74,52 @@ run "least_privilege_role_on_the_workspace" {
   assert {
     condition     = endswith(azurerm_role_assignment.workspace.scope, "/workspaces/mlw-manufacturing")
     error_message = "The role must be limited to the department workspace."
+  }
+}
+
+run "no_team_group_by_default" {
+  command = plan
+
+  assert {
+    condition     = length(azuread_group.team) == 0 && length(azurerm_role_assignment.team) == 0
+    error_message = "No Entra ID group unless create_team_group = true (it needs extra permissions)."
+  }
+}
+
+run "team_group_on_request_gets_the_same_limited_role" {
+  command = plan
+
+  variables {
+    create_team_group      = true
+    team_member_object_ids = ["11111111-1111-1111-1111-111111111111"]
+  }
+
+  assert {
+    condition     = azuread_group.team[0].display_name == "grp-ml-manufacturing-tool-wear"
+    error_message = "Unexpected team group name."
+  }
+
+  assert {
+    condition     = azurerm_role_assignment.team[0].role_definition_name == "AzureML Data Scientist"
+    error_message = "The team group should get AzureML Data Scientist, never Owner or Contributor."
+  }
+}
+
+run "data_domains_are_recorded" {
+  command = plan
+
+  variables {
+    data_domains = ["production", "maintenance"]
+  }
+
+  assert {
+    condition     = azurerm_user_assigned_identity.project.tags["data_domains"] == "production,maintenance"
+    error_message = "The data domains should be visible as a tag."
+  }
+
+  assert {
+    condition     = output.fabric_access_todo.read_data_domains == tolist(["production", "maintenance"])
+    error_message = "The data domains should be listed in the Fabric to-do output."
   }
 }
 

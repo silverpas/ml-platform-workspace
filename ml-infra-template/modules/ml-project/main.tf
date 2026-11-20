@@ -2,9 +2,10 @@
 #   1. an identity (a "robot account") for the project's GitHub workflows,
 #   2. permission for GitHub to log in as that identity, without secrets (OIDC),
 #   3. permission for that identity to run jobs and register models in the workspace,
-#   4. its own compute cluster, which scales to 0 machines when idle.
+#   4. optionally, an Entra ID group for the team with the same permission.
+# Compute clusters are shared and come from the ml-workspace module.
 
-# The department workspace already exists (created by the platform team).
+# The department workspace already exists (created with the ml-workspace module).
 # "data" means: look it up, don't create it.
 data "azurerm_machine_learning_workspace" "department" {
   name                = var.workspace_name
@@ -12,15 +13,15 @@ data "azurerm_machine_learning_workspace" "department" {
 }
 
 locals {
-  project_id = "${var.department}-${var.name}" # e.g. manufacturing-machine-fail
+  project_id = "${var.department}-${var.name}" # e.g. manufacturing-tool-wear
   location   = data.azurerm_machine_learning_workspace.department.location
-  vm_size    = var.gpu ? var.gpu_vm_size : var.cpu_vm_size
 
   tags = merge(var.tags, {
-    department = var.department
-    use_case   = var.name
-    owner      = var.owner
-    managed_by = "terraform"
+    department   = var.department
+    use_case     = var.name
+    owner        = var.owner
+    data_domains = join(",", var.data_domains)
+    managed_by   = "terraform"
   })
 
   # GitHub's login service, and the audience Azure expects for it.
@@ -65,25 +66,21 @@ resource "azurerm_role_assignment" "workspace" {
   principal_type       = "ServicePrincipal"
 }
 
-# 4. The project's compute cluster.
-resource "azurerm_machine_learning_compute_cluster" "project" {
-  name                          = "cc-${var.name}"
-  location                      = local.location
-  machine_learning_workspace_id = data.azurerm_machine_learning_workspace.department.id
-  vm_size                       = local.vm_size
-  vm_priority                   = "Dedicated"
-  tags                          = local.tags
+# 4. Optional team group with the same limited role (never Owner or Contributor).
+resource "azuread_group" "team" {
+  count = var.create_team_group ? 1 : 0
 
-  scale_settings {
-    min_node_count                       = 0 # no machines (and no cost) when idle
-    max_node_count                       = var.max_nodes
-    scale_down_nodes_after_idle_duration = "PT15M" # stop machines after 15 idle minutes
-  }
+  display_name     = "grp-ml-${local.project_id}"
+  description      = "Team of ML use case ${var.name} (${var.department}). Owner: ${var.owner}."
+  security_enabled = true
+  members          = var.team_member_object_ids
+}
 
-  # Jobs on this cluster run as the project identity, so the platform team
-  # can give exactly this identity access to the Fabric data it needs.
-  identity {
-    type         = "UserAssigned"
-    identity_ids = [azurerm_user_assigned_identity.project.id]
-  }
+resource "azurerm_role_assignment" "team" {
+  count = var.create_team_group ? 1 : 0
+
+  scope                = data.azurerm_machine_learning_workspace.department.id
+  role_definition_name = "AzureML Data Scientist"
+  principal_id         = azuread_group.team[0].object_id
+  principal_type       = "Group"
 }

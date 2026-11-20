@@ -9,6 +9,10 @@ terraform {
       source  = "hashicorp/azurerm"
       version = "~> 4.81"
     }
+    azuread = {
+      source  = "hashicorp/azuread"
+      version = "~> 3.10"
+    }
   }
 }
 
@@ -18,16 +22,17 @@ provider "azurerm" {
   features {}
 }
 
-module "ml_machine_failure" {
+module "ml_tool_wear" {
   source = "../.."
 
-  department  = "manufacturing"
-  name        = "machine-fail"
-  owner       = "maintenance-analytics-team"     # replace with the real owner
-  github_repo = "example-org/ml-machine-failure" # replace with the real repo
-  gpu         = false
+  department   = "manufacturing"
+  name         = "tool-wear"
+  owner        = "[owner]"                  # replace with the real owner
+  github_repo  = "example-org/ml-tool-wear" # replace with the real repo
+  gpu          = false
+  data_domains = ["[data domain]"] # replace; access is granted in Fabric by hand
 
-  # The department workspace, created once by the platform team.
+  # The department workspace, created once with the ml-workspace module.
   workspace_name                = "[department workspace]"
   workspace_resource_group_name = "[department resource group]"
 }
@@ -35,10 +40,10 @@ module "ml_machine_failure" {
 output "github_variables" {
   description = "Values to set as GitHub repository variables."
   value = {
-    AZURE_CLIENT_ID       = module.ml_machine_failure.azure_client_id
-    AZURE_TENANT_ID       = module.ml_machine_failure.azure_tenant_id
-    AZURE_SUBSCRIPTION_ID = module.ml_machine_failure.azure_subscription_id
-    AZURE_ML_WORKSPACE    = module.ml_machine_failure.workspace_name
-    AZURE_RESOURCE_GROUP  = module.ml_machine_failure.resource_group_name
+    AZURE_CLIENT_ID       = module.ml_tool_wear.azure_client_id
+    AZURE_TENANT_ID       = module.ml_tool_wear.azure_tenant_id
+    AZURE_SUBSCRIPTION_ID = module.ml_tool_wear.azure_subscription_id
+    AZURE_ML_WORKSPACE    = module.ml_tool_wear.workspace_name
+    AZURE_RESOURCE_GROUP  = module.ml_tool_wear.resource_group_name
   }
 }
