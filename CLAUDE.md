@@ -109,7 +109,7 @@ Update this section when commands change.
 3. `ml-project-template`: Azure ML jobs, environment, workflows, notebook, model card ✅
 4. `ml-infra-template`: both modules, validated ✅
 5. `cdp-ml-onboarding`: ML registry (YAML + schema), Terraform reading it, checklist, validated ✅
-6. `ml-requests`: issue form and process docs
+6. `ml-requests`: issue form (same fields as the registry YAML) and process docs ✅
 7. Final pass: every `AGENTS.md` matches its folder
 
 ## How to work with me
