@@ -77,7 +77,7 @@ python3.11 -m venv .venv && source .venv/bin/activate
 pip install -r requirements.txt
 python -m src.prep && python -m src.train && python -m src.evaluate && python -m src.register
 python -m src.register --promote <version>
-python -m src.score --input data/raw/ai4i2020.csv --output data/predictions/predictions.parquet
+python -m src.score --input data/raw/ai4i2020.csv   # Delta table in data/predictions/
 pytest
 ruff check . && ruff format --check .
 mlflow ui --backend-store-uri sqlite:///mlflow.db --port 8080

@@ -218,7 +218,11 @@ The module's exact design must follow how the platform team already structures T
   ML registry files should become a new object type there.
 - How do Azure ML and Fabric authenticate to each other?
 - Retirement criteria for models (e.g. no predictions consumed for X months).
-- Which environments (dev/test/prod) are needed, and when?
+- Which environments (dev/test/prod) are needed, and when? **Proposed default:
+  one workspace per department.** Inside it, the approval gate (candidate →
+  champion) already keeps untested models away from real predictions. Separate
+  dev/prod workspaces stay optional, for platforms whose rules require them; the
+  platform team decides.
 
 ## 9. Build order for this workspace
 
