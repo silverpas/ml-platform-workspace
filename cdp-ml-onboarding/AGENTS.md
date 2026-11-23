@@ -26,7 +26,7 @@ Jargon in one line each:
 | Step | What happens | This repo? |
 |---|---|---|
 | 0. Explore | Try the idea | No |
-| 1. Request | Request form | No |
+| 1. Request | Request form (ml-requests repo; same field names as the YAML) | No |
 | 2. Qualify | Go → **add one use case YAML** (and the department's workspace YAML if new) | **Yes** |
 | 3. Data and priority | `reads` and `predictions_table`; access granted in Fabric | **Yes** |
 | 4. Build | Hand the `github_variables` output to the project team | **Yes: hand-over** |
@@ -43,9 +43,12 @@ registry/
 ml/                     Terraform: reads the registry, calls the modules
   main.tf               one module per file (for_each), cross-file checks
   outputs.tf            registry_checks, github_variables, data_access_todo
+  variables.tf          registry_dir (only tests change it)
   versions.tf           pinned providers (azurerm ~> 4.81, azuread ~> 3.10)
-  tests/                terraform test with a fake Azure + fixtures
-tests/                  pytest: schema and cross-file checks, broken examples
+  tests/                terraform test with a fake Azure; tests/fixtures/ = small
+                        test registries (good and broken)
+tests/                  pytest: schema and cross-file checks
+  invalid/              broken YAML examples the schema must refuse
 docs/onboarding-checklist.md   step by step, for a person
 requirements.txt        jsonschema, pyyaml, pytest (tests only)
 ```

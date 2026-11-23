@@ -42,8 +42,9 @@ output "fabric_access_todo" {
   value = {
     identity_principal_id = azurerm_user_assigned_identity.project.principal_id
     read_data_domains     = var.data_domains
-    # ASSUMPTION: one predictions lakehouse per department, Contributor access.
-    write_predictions = "Contributor on the ${var.department} predictions lakehouse workspace"
+    # ASSUMPTION: the predictions go to a Gold ml_ table in the department's
+    # Fabric workspace; writing needs Contributor there.
+    write_predictions = "Contributor on the ${var.department} Fabric workspace with the Gold lakehouse (ml_ predictions table)"
   }
 }
 

@@ -92,8 +92,9 @@ Fabric data (versioned snapshot)
 
 **Default: B, batch scoring in Azure ML.** A nightly GitHub workflow (`score.yml`)
 submits the `batch-score` job; it loads the approved model version from the
-registry, scores the input data and writes the predictions to the predictions
-lakehouse, passed to the job as an output path. Option A stays available as an
+registry, scores the input data and writes the predictions as a Delta table to a
+Gold table with the `ml_` prefix (e.g. `ml_tool_wear_predictions`), straight into
+the lakehouse's Tables over OneLake, so Power BI can read it. Option A stays available as an
 **optional** notebook for teams that prefer to score inside Fabric.
 
 | | A. Score in Fabric *(optional)* | B. Score in Azure ML *(default)* |
@@ -186,8 +187,8 @@ predictions_table: ml_tool_wear_predictions   # Gold table, `ml_` prefix
 - an Entra ID group with a limited data-scientist role on the department's
   workspace (never Owner or Contributor);
 - a workload identity for this repo's GitHub workflows, trusting only that repo;
-- read access to the platform data, write access to a predictions lakehouse
-  (placeholders until the Fabric side is clear);
+- read access to the platform data, write access to the Gold `ml_` predictions
+  table (placeholders until the Fabric side is clear);
 - outputs: the IDs the project repo needs as GitHub variables.
 
 GPU **quota** is a separate request to Microsoft; Terraform can only use it once granted.

@@ -50,8 +50,10 @@ become its own GitHub repo. The design is in @docs/ml-platform-design.md
 ## Key decisions
 
 - **Scoring runs in Azure ML by default** (design option B): `score.yml` runs
-  nightly and submits `jobs/batch-score.yml`, which writes predictions to the
-  predictions lakehouse (OneLake). Locally, predictions go to `data/predictions/`.
+  nightly and submits `jobs/batch-score.yml`, which writes predictions as a Delta
+  table to a Gold `ml_` table (`scoring.predictions_table` in `config.yml`, the
+  same as the registry YAML's `predictions_table`). Locally, the same Delta table
+  goes to `data/predictions/<predictions_table>/`.
   `notebooks/fabric_batch_score.ipynb` (option A, PREDICT in Fabric) is optional only.
 - One Azure ML workspace per department (`ml-workspace` module), one
   `ml-project` per use case.
@@ -110,7 +112,7 @@ Update this section when commands change.
 4. `ml-infra-template`: both modules, validated ✅
 5. `cdp-ml-onboarding`: ML registry (YAML + schema), Terraform reading it, checklist, validated ✅
 6. `ml-requests`: issue form (same fields as the registry YAML) and process docs ✅
-7. Final pass: every `AGENTS.md` matches its folder
+7. Final pass: every `AGENTS.md` matches its folder ✅
 
 ## How to work with me
 

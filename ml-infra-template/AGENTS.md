@@ -29,7 +29,7 @@ Jargon in one line each:
 | 2. Qualify | Go → one registry YAML in the platform repo → one `ml-project` | **Yes: the module used** |
 | 3. Data and priority | Data access (`data_domains`) | **Yes: placeholders** |
 | 4. Build | The project repo trains in the workspace | Uses what was created |
-| 5. Run and review | Scoring writes to the predictions lakehouse | Uses what was created |
+| 5. Run and review | Scoring writes to a Gold `ml_` table in Fabric | Uses what was created |
 
 ## Folder structure
 

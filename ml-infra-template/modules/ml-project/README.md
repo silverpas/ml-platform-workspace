@@ -59,7 +59,8 @@ resource group. Contributor is not enough.
    the `azurerm` provider. The `fabric_access_todo` output lists what to do. In
    Fabric, give the identity (`principal_id` output):
    - **Viewer** on the workspace that holds the input data;
-   - **Contributor** on the workspace with the predictions lakehouse.
+   - **Contributor** on the workspace with the Gold lakehouse, where the
+     predictions table (`ml_<use case>_predictions`) is written.
 
 ## Test it locally (no Azure needed)
 
