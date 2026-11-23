@@ -1,0 +1,17 @@
+# yaml-language-server: $schema=../schema/ml_use_case.schema.json
+# One ML use case. This file is the ONLY thing added to onboard it.
+# File name: <department>__<use_case_id>.yaml
+schema_version: "1.0.0"
+use_case_id: tool-wear
+display_name: Tool wear prediction
+department: manufacturing
+status: active
+owner: "[model owner]"
+github_repo: "example-org/ml-tool-wear"
+risk_tier: decision_support
+gpu: false
+# Tables the model reads (<domain>.<layer>.<table>); the data owner grants read access.
+reads:
+  - manufacturing.gold.fact_machine_sensors
+# Gold table the nightly scoring job writes to (ml_ prefix = consumer table for ML).
+predictions_table: ml_tool_wear_predictions

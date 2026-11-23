@@ -1,0 +1,11 @@
+schema_version: "1.0.0"
+use_case_id: churn
+department: sales
+status: active
+owner: team
+github_repo: example-org/ml-churn
+risk_tier: decision_support
+gpu: false
+reads:
+  - sales.gold.fact_example
+predictions_table: ml_churn_predictions

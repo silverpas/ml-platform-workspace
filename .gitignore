@@ -5,6 +5,9 @@
 CLAUDE.local.md
 docs/private/
 
+# --- Real company material: never in this public repo ---
+real-cdp-project/
+
 # --- Secrets / env files ---
 .env
 .env.*
@@ -36,3 +39,5 @@ mlflow.db
 .DS_Store
 .vscode/
 .idea/
+
+.real-cdp-project/

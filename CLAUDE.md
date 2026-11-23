@@ -36,6 +36,10 @@ become its own GitHub repo. The design is in @docs/ml-platform-design.md
   `AZURE_RESOURCE_GROUP`, `AZURE_ML_WORKSPACE`.
 - **Never run `terraform apply`** or create cloud resources. Only `terraform fmt`,
   `init -backend=false`, `validate`, and `terraform test` with the mock provider.
+  **One exception, the personal sandbox:** in the git-ignored `docs/private/`
+  folder, the user herself may run `terraform plan` and `apply` against her own
+  test resource group, after reviewing the plan with Claude. Claude writes the
+  files and explains, but never runs `apply` or `destroy`. Real names stay there.
 - **Local first**: the ML code runs without Azure (local MLflow
   `sqlite:///mlflow.db`, model files in `./mlruns`, local files).
 - Azure ML **SDK v2 / CLI v2** only (`azure-ai-ml`, YAML job specs), never SDK v1.
@@ -50,7 +54,11 @@ become its own GitHub repo. The design is in @docs/ml-platform-design.md
   predictions lakehouse (OneLake). Locally, predictions go to `data/predictions/`.
   `notebooks/fabric_batch_score.ipynb` (option A, PREDICT in Fabric) is optional only.
 - One Azure ML workspace per department (`ml-workspace` module), one
-  `ml-project` block per use case, added in the platform repo.
+  `ml-project` per use case.
+- **Metadata-driven onboarding**: a new ML use case is one YAML file in the
+  platform repo's ML registry (`registry/ml_use_cases/<department>__<id>.yaml`,
+  checked against a JSON schema with `jsonschema`). Terraform reads the files and
+  calls the modules; nobody writes module blocks per use case.
 - `demo-local-flow.yml` in the project template is a demo of the approval gate
   without Azure (environment `approval-demo`); it is not the production pipeline.
 
@@ -80,9 +88,11 @@ terraform -chdir=ml-infra-template/modules/ml-project init -backend=false
 terraform -chdir=ml-infra-template/modules/ml-project validate
 terraform -chdir=ml-infra-template/modules/ml-project test
 
-# cdp-ml-onboarding/   (milestone 5)
+# cdp-ml-onboarding/   (registry YAML + Terraform that reads it)
+cd cdp-ml-onboarding && pytest && cd ..        # schema checks (jsonschema)
 terraform -chdir=cdp-ml-onboarding/ml init -backend=false
 terraform -chdir=cdp-ml-onboarding/ml validate
+terraform -chdir=cdp-ml-onboarding/ml test
 
 # ml-requests/: no commands (Markdown and YAML only)
 
@@ -98,7 +108,7 @@ Update this section when commands change.
 2. `ml-project-template`: local pipeline on AI4I with MLflow and tests ✅
 3. `ml-project-template`: Azure ML jobs, environment, workflows, notebook, model card ✅
 4. `ml-infra-template`: both modules, validated ✅
-5. `cdp-ml-onboarding`: CDP example and checklist, validated
+5. `cdp-ml-onboarding`: ML registry (YAML + schema), Terraform reading it, checklist, validated ✅
 6. `ml-requests`: issue form and process docs
 7. Final pass: every `AGENTS.md` matches its folder
 

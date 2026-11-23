@@ -1,0 +1,80 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "ml_use_case.schema.json",
+  "title": "ML use case",
+  "description": "One ML use case. File name: registry/ml_use_cases/<department>__<use_case_id>.yaml. The platform's Terraform reads it and creates the use case's identity and access (ml-project module).",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "use_case_id",
+    "department",
+    "owner",
+    "github_repo",
+    "risk_tier",
+    "reads",
+    "predictions_table"
+  ],
+  "properties": {
+    "schema_version": {
+      "description": "Version of this schema the file was written for. Only 1.x is supported.",
+      "type": "string",
+      "pattern": "^1\\.[0-9]+\\.[0-9]+$"
+    },
+    "use_case_id": {
+      "description": "Short name of the use case, e.g. tool-wear. The same name as the model, the repo (ml-<id>) and the OneLake folder.",
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9-]{1,22}[a-z0-9]$"
+    },
+    "department": {
+      "description": "Department that owns the use case. A file registry/ml_workspaces/<department>.yaml must exist.",
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9-]{1,19}$"
+    },
+    "display_name": {
+      "description": "Human-readable name, e.g. Tool wear prediction.",
+      "type": "string",
+      "minLength": 3,
+      "maxLength": 80
+    },
+    "status": {
+      "description": "active: provisioned. retired: kept for the record; Terraform removes its identity and access.",
+      "enum": ["active", "retired"],
+      "default": "active"
+    },
+    "owner": {
+      "description": "Model owner: a person or team, e.g. an email address or team name.",
+      "type": "string",
+      "minLength": 3
+    },
+    "github_repo": {
+      "description": "The use case's repo, as org/repo. Only workflows from this repo can log in to Azure.",
+      "type": "string",
+      "pattern": "^[A-Za-z0-9-]+/[A-Za-z0-9._-]+$"
+    },
+    "risk_tier": {
+      "description": "Set at qualification (step 2): how strict the approval gate is.",
+      "enum": ["exploration", "decision_support", "production_critical"]
+    },
+    "gpu": {
+      "description": "true = train on the department's GPU cluster (the department's workspace file must have gpu: true).",
+      "type": "boolean",
+      "default": false
+    },
+    "reads": {
+      "description": "Tables the use case reads, as <domain>.<layer>.<table>. Read access is granted by the data owner.",
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "pattern": "^[a-z][a-z0-9_-]*\\.(silver1|silver2|gold)\\.[a-z][a-z0-9_]*$"
+      }
+    },
+    "predictions_table": {
+      "description": "Gold table the predictions are written to. Must start with ml_ (consumer table for ML).",
+      "type": "string",
+      "pattern": "^ml_[a-z0-9_]+$"
+    }
+  }
+}

@@ -1,0 +1,10 @@
+# reads must be <domain>.<silver1|silver2|gold>.<table>
+schema_version: "1.0.0"
+use_case_id: tool-wear
+department: manufacturing
+owner: team
+github_repo: example-org/ml-tool-wear
+risk_tier: decision_support
+reads:
+  - fact_machine_sensors
+predictions_table: ml_tool_wear_predictions

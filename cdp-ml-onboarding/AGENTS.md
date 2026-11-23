@@ -1,18 +1,23 @@
-# AGENTS.md: onboarding ML use cases in the platform (CDP) repo
+# AGENTS.md: ML registry for the platform repo
 
-Instructions for platform engineers who onboard a new ML use case, and for
-their AI coding agents.
+Instructions for platform engineers who onboard ML use cases, and for their
+AI coding agents.
 
 ## What this repo is for
 
-A **simulated slice of the platform repo (CDP)**. It shows exactly what gets
-added there for ML: one workspace block per department, and one block per ML
-use case. It is an **example**, not a replacement for the real platform repo.
-Copy the pattern into the real repo; do not run it from here.
+An **example of the platform repo's ML registry**. Onboarding is
+**metadata-driven**: a new ML use case is one YAML file in a pull request.
+Terraform reads every file and calls the shared modules from
+`ml-infra-template` once per file. Nobody writes Terraform per use case.
+
+It is an **example**: copy the pattern into the real platform repo; do not
+apply it from here. If the platform already has a registry with a resolver
+(YAML → contract → Terraform), these files become a new object type there.
 
 Jargon in one line each:
-- **CDP repo**: the platform team's existing Terraform repo for the data platform.
-- **Module block**: a few lines that call a reusable Terraform module with inputs.
+- **Registry**: a folder of YAML files that describe what should exist.
+- **JSON schema**: a file with the rules a YAML file must follow (fields, formats).
+- **Metadata-driven**: you describe *what* you want in a file; code does the *how*.
 - **`terraform plan`**: a dry run that lists what would be created or changed.
 - **Outputs**: values Terraform prints after apply (here: IDs for GitHub variables).
 
@@ -22,54 +27,66 @@ Jargon in one line each:
 |---|---|---|
 | 0. Explore | Try the idea | No |
 | 1. Request | Request form | No |
-| 2. Qualify | Go → **add one `ml-project` block**, plan, review, apply | **Yes** |
-| 3. Data and priority | Fill in `data_domains`; Fabric access | **Yes** |
-| 4. Build | Hand the outputs to the project team | **Yes: hand-over** |
-| 5. Run and review | Retire = remove the block | **Yes** |
+| 2. Qualify | Go → **add one use case YAML** (and the department's workspace YAML if new) | **Yes** |
+| 3. Data and priority | `reads` and `predictions_table`; access granted in Fabric | **Yes** |
+| 4. Build | Hand the `github_variables` output to the project team | **Yes: hand-over** |
+| 5. Run and review | Retire = `status: retired` | **Yes** |
 
-## Folder structure (built in milestone 5)
+## Folder structure
 
 ```
-ml/providers.tf         azurerm + azuread providers, pinned
-ml/workspaces.tf        added ONCE: one ml-workspace block (manufacturing)
-ml/projects.tf          one ml-project block per use case (example: tool-wear)
-ml/outputs.tf           per-project outputs = the project repo's GitHub variables
-onboarding-checklist.md step-by-step onboarding of a new use case
-examples/onboard-new-use-case.diff   the exact diff for a second use case
+registry/
+  ml_workspaces/<department>.yaml               ONCE per department: turns on ML
+  ml_use_cases/<department>__<use_case>.yaml    ONE per ML use case
+  schema/ml_workspace.schema.json               rules for the files above
+  schema/ml_use_case.schema.json
+ml/                     Terraform: reads the registry, calls the modules
+  main.tf               one module per file (for_each), cross-file checks
+  outputs.tf            registry_checks, github_variables, data_access_todo
+  versions.tf           pinned providers (azurerm ~> 4.81, azuread ~> 3.10)
+  tests/                terraform test with a fake Azure + fixtures
+tests/                  pytest: schema and cross-file checks, broken examples
+docs/onboarding-checklist.md   step by step, for a person
+requirements.txt        jsonschema, pyyaml, pytest (tests only)
 ```
 
-In this example only, module `source` points to `../ml-infra-template/modules/...`
+In this example only, module `source` points to `../../ml-infra-template/modules/...`
 so it validates locally. In the real repo it points to wherever the platform
 team keeps the modules.
 
 ## Workflow: onboard a new ML use case
 
-1. Open a branch in the platform repo.
-2. Add one `ml-project` block in `ml/projects.tf` and its outputs in `ml/outputs.tf`
-   (copy `examples/onboard-new-use-case.diff`).
-3. Open a pull request; run `terraform plan`.
-4. Check the plan: only new resources for this use case; no Owner or
-   Contributor roles; the federated credential names the right repo; nothing destroyed.
-5. Review, merge, apply (platform team, in the real repo).
-6. Hand over to the project team: set the outputs as GitHub variables
-   `AZURE_CLIENT_ID`, `AZURE_TENANT_ID`, `AZURE_SUBSCRIPTION_ID`,
-   `AZURE_RESOURCE_GROUP`, `AZURE_ML_WORKSPACE` in their repo.
+Follow [docs/onboarding-checklist.md](docs/onboarding-checklist.md). In short:
 
-Details: `onboarding-checklist.md` (milestone 5).
+1. If the department has no `registry/ml_workspaces/<department>.yaml`, add it.
+2. Add `registry/ml_use_cases/<department>__<use_case_id>.yaml`.
+3. Open a pull request: schema checks and `terraform plan` run.
+4. Check the plan: only this use case's identity, two federated credentials and
+   one *AzureML Data Scientist* role; nothing destroyed.
+5. Review, merge, apply (platform team, after approval, in the real repo).
+6. Grant data access in Fabric (`data_access_todo` output) and hand the
+   `github_variables` output to the project team.
 
 ## Commands (no Azure account needed)
 
 ```bash
+pip install -r requirements.txt      # Python 3.11
+pytest                               # schema and cross-file checks
 terraform -chdir=ml fmt -recursive
 terraform -chdir=ml init -backend=false
 terraform -chdir=ml validate
+terraform -chdir=ml test             # fake Azure, nothing is created
 ```
 
 ## Rules (what not to do)
 
 - **Never run `terraform apply`** from here, never create cloud resources.
 - **No secrets**, no real IDs, no client or internal system names.
-- One block per use case; do not edit other use cases' blocks in the same PR.
+- **People only edit `registry/`.** Changing the schema, `ml/` or the modules is a
+  platform-team change, in its own pull request.
+- One use case per pull request; do not edit other use cases' files.
 - Never give a use case Owner or Contributor.
+- A new field: add it to the schema first (optional = minor version, e.g. 1.1.0),
+  then use it in `ml/main.tf`, then add a test.
 - Mark every guess about the real platform repo with `# ASSUMPTION:`.
 - When you change this folder, update this file in the same change.

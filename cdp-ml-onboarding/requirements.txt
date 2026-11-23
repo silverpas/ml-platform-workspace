@@ -1,0 +1,4 @@
+# Only for the registry checks in tests/ (Python 3.11). Exact versions.
+jsonschema==4.26.0   # checks every registry YAML against registry/schema/*.schema.json
+pyyaml==6.0.3        # reads the YAML files
+pytest==9.2.0

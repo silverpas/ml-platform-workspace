@@ -12,6 +12,11 @@ override.tf.json
 *_override.tf
 *_override.tf.json
 
+# --- Python (tests) ---
+__pycache__/
+.pytest_cache/
+.venv/
+
 # --- Local settings ---
 .env
 .env.*

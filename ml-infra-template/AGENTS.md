@@ -50,9 +50,14 @@ Both modules: `versions.tf` (pinned providers), `variables.tf` (inputs),
 
 ## Workflow for users (platform engineers)
 
-1. Once per department: add one `ml-workspace` block in the platform repo
-   (needs Contributor on the resource group).
-2. Per approved use case: add one `ml-project` block (see `examples/basic/`).
+The modules are the engine behind a **metadata-driven** registry: people add
+YAML files, and the platform repo's Terraform calls the modules once per file
+(worked example: the `cdp-ml-onboarding` folder/repo).
+
+1. Once per department: `registry/ml_workspaces/<department>.yaml` → one
+   `ml-workspace` (needs Contributor on the resource group).
+2. Per approved use case: `registry/ml_use_cases/<department>__<id>.yaml` → one
+   `ml-project` (see also `examples/basic/` for a direct call).
 3. Open a pull request, run `terraform plan`, review it, then apply (in the
    platform repo, by the platform team). `ml-project` assigns roles, so it needs
    Owner, User Access Administrator or Role Based Access Control Administrator.
@@ -60,7 +65,6 @@ Both modules: `versions.tf` (pinned providers), `variables.tf` (inputs),
    `AZURE_CLIENT_ID`, `AZURE_TENANT_ID`, `AZURE_SUBSCRIPTION_ID`,
    `AZURE_RESOURCE_GROUP`, `AZURE_ML_WORKSPACE`.
 
-A full worked example lives in the `cdp-ml-onboarding` folder/repo.
 
 ## Commands (no Azure account needed)
 

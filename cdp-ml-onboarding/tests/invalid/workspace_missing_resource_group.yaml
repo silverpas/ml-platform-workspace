@@ -1,0 +1,4 @@
+# a workspace needs a resource group
+schema_version: "1.0.0"
+department: manufacturing
+owner: platform-team

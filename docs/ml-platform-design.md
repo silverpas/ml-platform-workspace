@@ -41,7 +41,7 @@ This design proposes **self-service with control**:
 |---|---|---|---|---|
 | **0. Explore** (optional) | Try the idea, no request needed | Anyone | An idea worth a request | Fabric *(in place)*, playground workspace *(proposed)* |
 | **1. Request** | Describe problem, value and how predictions will be used | Requester | Request issue (form) | GitHub, `ml-requests` repo *(proposed)* |
-| **2. Qualify** | Is there value? Is ML the right tool? Owner and risk tier | Platform lead + requester | Go: project set up | Terraform module + repo from template *(proposed)* |
+| **2. Qualify** | Is there value? Is ML the right tool? Owner and risk tier | Platform lead + requester | Go: one YAML file in the platform repo, repo from template | ML registry YAML + Terraform modules *(proposed)* |
 | **3. Data and priority** | Is the data in the platform? If not, raise a data request | Platform lead, data owners | Data access, priority | Fabric data domains *(in place)*, data intake *(proposed)* |
 | **4. Build** | Project from template: train, register, approval gate | Model owner and team | Approved model version | Azure ML *(proposed)*, GitHub template *(proposed)* |
 | **5. Run and review** | Monitor; keep, retrain or retire | Model owner | Review decision | Power BI *(in place)*, endpoint or local *(proposed)* |
@@ -63,8 +63,19 @@ This design proposes **self-service with control**:
   use cases. It holds experiments, the model registry and CPU/GPU compute.
   Start with one workspace; add more only when other departments bring ML cases.
 - **One GitHub repo per use case** *(proposed)*, created from the template repo.
-- Ordering a project = adding **one Terraform module block** and **one repo from the
-  template**. Later, approving a request could trigger both automatically.
+- **Metadata-driven onboarding** *(proposed)*: ordering a project = adding **one
+  YAML file** in the platform repo's ML registry, in a pull request, plus **one repo
+  from the template**. Nobody writes Terraform per use case: the platform's Terraform
+  reads every registry file and calls the shared modules for each one (plan, human
+  approval, apply). This follows the pattern data platforms often already use for
+  departments and data sources ("a new domain starts as one YAML file").
+
+```
+registry/ml_workspaces/<department>.yaml            once per department
+registry/ml_use_cases/<department>__<use-case>.yaml once per ML use case
+        ↓ checked against a JSON schema in the pull request
+Terraform reads the files → ml-workspace / ml-project modules → plan → approval → apply
+```
 
 ### 4.2 Each model run
 
@@ -112,7 +123,7 @@ Four repos, each with an `AGENTS.md` for its users and their AI agents:
 |---|---|---|---|
 | `ml-requests` | Request form (GitHub issue) and process | 1-3 | Requesters, platform lead |
 | `ml-infra-template` | Terraform modules `ml-workspace`, `ml-project` | 2-3 | Platform engineers |
-| `cdp-ml-onboarding` | Example of what the platform repo gets per use case | 2-3 | Platform team, platform lead |
+| `cdp-ml-onboarding` | Example of the platform repo's ML registry: YAML files, their schema, and the Terraform that reads them | 2-3 | Platform team, platform lead |
 | `ml-project-template` | Code template, one repo per use case | 4-5 | Model owner and team |
 
 ### 5.1 GitHub template repo (one repo per use case)
@@ -153,21 +164,25 @@ Notes:
 `ml-workspace`, **once per department**: Azure ML workspace with storage, key
 vault, Application Insights, a CPU cluster that scales to 0, and an optional GPU cluster.
 
-`ml-project`, **one block per use case**, added in the platform repo:
+`ml-project`, **once per use case**. Nobody calls it by hand: the platform repo's
+Terraform calls it once for every file in the ML registry. A use case is described
+by one YAML file, checked against a JSON schema:
 
-```hcl
-module "ml_tool_wear" {
-  source       = "./modules/ml-project"
-  department   = "manufacturing"
-  name         = "tool-wear"
-  owner        = "[owner]"
-  github_repo  = "[org]/ml-tool-wear"
-  gpu          = false
-  data_domains = ["[data domain]"]
-}
+```yaml
+# registry/ml_use_cases/manufacturing__tool-wear.yaml
+schema_version: "1.0.0"
+use_case_id: tool-wear
+department: manufacturing
+owner: "[owner]"
+github_repo: "[org]/ml-tool-wear"
+risk_tier: decision_support
+gpu: false
+reads:
+  - manufacturing.gold.fact_machine_sensors
+predictions_table: ml_tool_wear_predictions   # Gold table, `ml_` prefix
 ```
 
-It creates:
+`ml-project` creates:
 - an Entra ID group with a limited data-scientist role on the department's
   workspace (never Owner or Contributor);
 - a workload identity for this repo's GitHub workflows, trusting only that repo;
@@ -198,7 +213,9 @@ The module's exact design must follow how the platform team already structures T
 ## 8. Open questions
 
 - Who is the platform lead, and who reviews at the approval gate?
-- Does the Terraform module fit how the platform team structures its repo?
+- Does the Terraform module fit how the platform team structures its repo? If the
+  platform already has a registry with a resolver (YAML → contract → Terraform), the
+  ML registry files should become a new object type there.
 - How do Azure ML and Fabric authenticate to each other?
 - Retirement criteria for models (e.g. no predictions consumed for X months).
 - Which environments (dev/test/prod) are needed, and when?

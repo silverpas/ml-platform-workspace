@@ -66,3 +66,36 @@ jobs:
             terraform -chdir="$module" test
             echo "::endgroup::"
           done
+
+  cdp-ml-onboarding:
+    name: cdp-ml-onboarding (registry schema + terraform)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: cdp-ml-onboarding
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.11"
+          cache: pip
+          cache-dependency-path: cdp-ml-onboarding/requirements.txt
+
+      - name: Install packages
+        run: pip install -r requirements.txt
+
+      - name: Check the registry YAML files (pytest + jsonschema)
+        run: pytest
+
+      - uses: hashicorp/setup-terraform@v4
+        with:
+          terraform_version: "1.17.1"
+
+      # The root reads the registry and calls the modules in ../ml-infra-template.
+      - name: Validate and test the Terraform that reads the registry
+        run: |
+          terraform fmt -check -recursive
+          terraform -chdir=ml init -backend=false -input=false
+          terraform -chdir=ml validate
+          terraform -chdir=ml test

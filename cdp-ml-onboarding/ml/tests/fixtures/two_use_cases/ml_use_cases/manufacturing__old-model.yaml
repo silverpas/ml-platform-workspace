@@ -1,0 +1,11 @@
+schema_version: "1.0.0"
+use_case_id: old-model
+department: manufacturing
+status: retired
+owner: team
+github_repo: example-org/ml-old-model
+risk_tier: decision_support
+gpu: false
+reads:
+  - manufacturing.gold.fact_example
+predictions_table: ml_old_model_predictions
