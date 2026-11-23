@@ -22,6 +22,26 @@ variable "name" {
   }
 }
 
+variable "environment" {
+  description = "Optional, e.g. \"dev\" or \"prod\", the same as the workspace's. null (default) = no environment, one workspace per department. Added to names and tags."
+  type        = string
+  default     = null
+
+  validation {
+    condition     = var.environment == null ? true : can(regex("^[a-z][a-z0-9]{1,4}$", var.environment))
+    error_message = "environment: 2-5 lowercase letters or digits, e.g. dev, test, prod."
+  }
+}
+
+variable "names" {
+  description = "Optional: your own names, when the platform has naming rules. Left out = the module's default (id-ml-<department>-<name>, grp-ml-<department>-<name>)."
+  type = object({
+    identity   = optional(string)
+    team_group = optional(string)
+  })
+  default = {}
+}
+
 variable "owner" {
   description = "Model owner (a person or team). Stored as a tag so everyone knows who to ask."
   type        = string
@@ -60,6 +80,12 @@ variable "gpu" {
   description = "true = this project trains on the department's GPU cluster (ml-workspace with gpu = true). Changes only the compute_name output."
   type        = bool
   default     = false
+}
+
+variable "compute_name" {
+  description = "Optional: the cluster the project's jobs use, e.g. ml-workspace's cpu_cluster_name output. null = \"gpu-cluster\" or \"cpu-cluster\", depending on gpu."
+  type        = string
+  default     = null
 }
 
 # --- Data (placeholders until the Fabric side is clear) ---

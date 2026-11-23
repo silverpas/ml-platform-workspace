@@ -29,7 +29,7 @@ output "resource_group_name" {
 
 output "compute_name" {
   description = "Shared cluster to use in the project's jobs/*.yml (compute: azureml:<name>), from ml-workspace."
-  value       = var.gpu ? "gpu-cluster" : "cpu-cluster"
+  value       = coalesce(var.compute_name, var.gpu ? "gpu-cluster" : "cpu-cluster")
 }
 
 output "team_group_id" {

@@ -21,8 +21,29 @@ it, so it fits however the platform team organizes resource groups, and
 | CPU cluster | `cpu-cluster` | Shared by all use cases; **scales to 0** machines when idle |
 | GPU cluster (optional) | `gpu-cluster` | Only with `gpu = true`; max 1 machine, scales to 0 |
 
-The `<6 chars>` come from the resource group's ID: storage, key vault and
-registry names must be unique in all of Azure.
+The `<6 chars>` come from the resource group's ID (and the environment, if
+any): storage, key vault and registry names must be unique in all of Azure.
+
+## Your own names and an optional environment
+
+The names above are **defaults**. If the platform has naming rules (often
+defined in one central place), pass the names in: anything left out keeps its
+default.
+
+```hcl
+names = {
+  workspace       = "mlw-mfg-weu-01"
+  storage_account = "stmlmfgweu01" # 3-24 lowercase letters/digits, no hyphens
+}
+cpu_cluster_name = "cpu-mfg-01"    # then pass it on to ml-project (compute_name)
+```
+
+`environment` (e.g. `dev`, `prod`) is **optional and off by default**. The
+recommended setup is one workspace per department: the approval gate
+(candidate → champion) already keeps untested models away from real
+predictions. Set it only if the platform's rules require separate
+environments; it adds `-<environment>` to the default names and an
+`environment` tag, so each environment gets its own workspace.
 
 ## Costs (rough, check the Azure pricing calculator)
 
@@ -41,7 +62,9 @@ registry names must be unique in all of Azure.
 | `resource_group_name` | yes | an existing resource group |
 | `owner` | yes | `ml-platform-team` |
 | `gpu` | no (`false`) | `true` needs GPU quota from Microsoft first |
-| `cpu_cluster_name`, `cpu_vm_size`, `cpu_max_nodes`, `gpu_vm_size`, `idle_minutes_before_scale_down`, `public_network_access`, `tags` | no | see [variables.tf](variables.tf) |
+| `environment` | no (none) | `dev`, `prod`: only if the platform requires environments |
+| `names` | no (defaults) | your own names, see above |
+| `cpu_cluster_name`, `gpu_cluster_name`, `cpu_vm_size`, `cpu_max_nodes`, `gpu_vm_size`, `idle_minutes_before_scale_down`, `public_network_access`, `tags` | no | see [variables.tf](variables.tf) |
 
 ## Who can apply it
 

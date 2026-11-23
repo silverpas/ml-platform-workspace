@@ -15,6 +15,46 @@ variable "resource_group_name" {
   type        = string
 }
 
+variable "environment" {
+  description = "Optional, e.g. \"dev\" or \"prod\". null (default) = one workspace per department, the recommended setup: the approval gate (candidate -> champion) already separates tested from untested models. Set it only if the platform's rules require separate environments; it is added to names and tags."
+  type        = string
+  default     = null
+
+  validation {
+    condition     = var.environment == null ? true : can(regex("^[a-z][a-z0-9]{1,4}$", var.environment))
+    error_message = "environment: 2-5 lowercase letters or digits, e.g. dev, test, prod."
+  }
+}
+
+variable "names" {
+  description = "Optional: your own resource names, when the platform has naming rules (often defined in one central place). Any name left out uses the module's default (see README)."
+  type = object({
+    workspace          = optional(string)
+    storage_account    = optional(string)
+    key_vault          = optional(string)
+    container_registry = optional(string)
+    log_analytics      = optional(string)
+    app_insights       = optional(string)
+  })
+  default = {}
+
+  # Azure's own rules for the names that must be unique in all of Azure.
+  validation {
+    condition     = var.names.storage_account == null ? true : can(regex("^[a-z0-9]{3,24}$", var.names.storage_account))
+    error_message = "names.storage_account: 3-24 lowercase letters or digits, no hyphens."
+  }
+
+  validation {
+    condition     = var.names.key_vault == null ? true : can(regex("^[a-zA-Z][a-zA-Z0-9-]{1,22}[a-zA-Z0-9]$", var.names.key_vault))
+    error_message = "names.key_vault: 3-24 letters, digits or hyphens, starting with a letter."
+  }
+
+  validation {
+    condition     = var.names.container_registry == null ? true : can(regex("^[a-zA-Z0-9]{5,50}$", var.names.container_registry))
+    error_message = "names.container_registry: 5-50 letters or digits, no hyphens."
+  }
+}
+
 variable "owner" {
   description = "Who is responsible for this workspace (a person or team). Stored as a tag."
   type        = string
@@ -51,9 +91,15 @@ variable "cpu_max_nodes" {
 }
 
 variable "gpu" {
-  description = "true = also create a GPU cluster \"gpu-cluster\" (scales to 0). Needs GPU quota from Microsoft first."
+  description = "true = also create a GPU cluster (gpu_cluster_name, scales to 0). Needs GPU quota from Microsoft first."
   type        = bool
   default     = false
+}
+
+variable "gpu_cluster_name" {
+  description = "Name of the GPU cluster (only used when gpu = true)."
+  type        = string
+  default     = "gpu-cluster"
 }
 
 variable "gpu_vm_size" {

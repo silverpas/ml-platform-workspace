@@ -156,3 +156,58 @@ run "rejects_bad_github_repo" {
 
   expect_failures = [var.github_repo]
 }
+
+# --- Optional environment and names from outside ---
+
+run "default_names_without_environment" {
+  command = plan
+
+  assert {
+    condition     = azurerm_user_assigned_identity.project.name == "id-ml-manufacturing-tool-wear"
+    error_message = "Default identity name should be id-ml-<department>-<name>."
+  }
+
+  assert {
+    condition     = !contains(keys(azurerm_user_assigned_identity.project.tags), "environment")
+    error_message = "No environment tag unless an environment is given."
+  }
+}
+
+run "environment_goes_into_names_and_tags" {
+  command = plan
+
+  variables {
+    environment = "prod"
+  }
+
+  assert {
+    condition     = azurerm_user_assigned_identity.project.name == "id-ml-manufacturing-tool-wear-prod"
+    error_message = "With environment = prod the identity name should end with -prod."
+  }
+
+  assert {
+    condition     = azurerm_user_assigned_identity.project.tags["environment"] == "prod"
+    error_message = "The environment should be a tag."
+  }
+}
+
+run "names_from_outside_win" {
+  command = plan
+
+  variables {
+    names = {
+      identity = "uai-mfg-toolwear-01"
+    }
+    compute_name = "cpu-mfg-01"
+  }
+
+  assert {
+    condition     = azurerm_user_assigned_identity.project.name == "uai-mfg-toolwear-01"
+    error_message = "An identity name given in var.names must be used as it is."
+  }
+
+  assert {
+    condition     = output.compute_name == "cpu-mfg-01"
+    error_message = "A compute_name given from outside must be passed on to the project."
+  }
+}

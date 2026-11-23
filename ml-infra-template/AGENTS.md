@@ -18,6 +18,7 @@ Jargon in one line each:
 - **Entra ID group**: a group of people (formerly Azure AD) that gets permissions together.
 - **Mock provider**: a fake Azure used by `terraform test`; nothing is created.
 - **Resource group**: a folder in Azure for resources that are created and deleted together.
+- **Environment** (dev/test/prod): separate copies of the setup; optional here, off by default.
 
 ## Where this repo sits in the overall process
 
@@ -25,7 +26,7 @@ Jargon in one line each:
 |---|---|---|
 | 0. Explore | Try the idea | No |
 | 1. Request | Request form | No |
-| 2. Qualify | Go → one `ml-project` block is added in the CDP repo | **Yes: the module used** |
+| 2. Qualify | Go → one registry YAML in the platform repo → one `ml-project` | **Yes: the module used** |
 | 3. Data and priority | Data access (`data_domains`) | **Yes: placeholders** |
 | 4. Build | The project repo trains in the workspace | Uses what was created |
 | 5. Run and review | Scoring writes to the predictions lakehouse | Uses what was created |
@@ -65,6 +66,12 @@ YAML files, and the platform repo's Terraform calls the modules once per file
    `AZURE_CLIENT_ID`, `AZURE_TENANT_ID`, `AZURE_SUBSCRIPTION_ID`,
    `AZURE_RESOURCE_GROUP`, `AZURE_ML_WORKSPACE`.
 
+**Fitting the platform's rules.** Every name has a default (`mlw-<department>`,
+`id-ml-<department>-<use case>`, ...). If the platform has naming rules, pass
+the names in with `names = { ... }` (and `cpu_cluster_name` / `compute_name`);
+anything left out keeps its default. `environment` is optional and off by
+default: one workspace per department is the recommended setup, because the
+approval gate already separates tested from untested models.
 
 ## Commands (no Azure account needed)
 
@@ -88,6 +95,8 @@ terraform -chdir=modules/ml-workspace test     # mock provider: nothing is creat
 - **Pin provider versions** (`azurerm ~> 4.81`, `azuread ~> 3.10`); the same in both modules and examples.
 - **Clusters scale to 0** (`min_node_count = 0`); never add compute instances.
 - **Modules never create resource groups**: they receive one as input.
+- **Defaults never change silently**: without `environment` and `names`, names stay
+  exactly as they are (a rename means Azure deletes and recreates the resource).
 - Mark every guess about the platform team's setup with `# ASSUMPTION:`.
 - Examples use department `manufacturing` and use case `tool-wear`.
 - When you change a module, update its README, its tests and this file in the same change.

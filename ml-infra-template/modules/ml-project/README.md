@@ -16,9 +16,16 @@ from the [`ml-workspace`](../ml-workspace/README.md) module, once per department
 | Role assignment *AzureML Data Scientist* on the workspace | Submit jobs and register models; cannot change the workspace or compute |
 | *Optional:* Entra ID group `grp-ml-<department>-<name>` + the same role | Only with `create_team_group = true`; needs permission to create groups (often only IT) |
 
-All resources are tagged with `department`, `use_case`, `owner` and `data_domains`.
-The project uses the department's shared `cpu-cluster` (or `gpu-cluster` with
-`gpu = true`); the `compute_name` output says which.
+All resources are tagged with `department`, `use_case`, `owner` and `data_domains`
+(and `environment`, if given). The project uses the department's shared
+`cpu-cluster` (or `gpu-cluster` with `gpu = true`); the `compute_name` output
+says which. If the workspace's clusters have other names, pass the right one
+in `compute_name`.
+
+**Names from outside:** `names = { identity = "...", team_group = "..." }`
+replaces the default names; anything left out keeps its default. The optional
+`environment` (off by default) must match the workspace's and adds
+`-<environment>` to the default names.
 
 ## Inputs
 
@@ -31,6 +38,9 @@ The project uses the department's shared `cpu-cluster` (or `gpu-cluster` with
 | `workspace_name` | yes | the department workspace |
 | `workspace_resource_group_name` | yes | its resource group |
 | `gpu` | no (`false`) | `true` = use the shared GPU cluster (ml-workspace with `gpu = true`) |
+| `compute_name` | no | the cluster name from ml-workspace, when it is not `cpu-cluster`/`gpu-cluster` |
+| `environment` | no (none) | `dev`, `prod`: only if the workspace has one |
+| `names` | no (defaults) | `{ identity = "uai-mfg-toolwear-01" }` |
 | `data_domains` | no (`[]`) | `["production"]`: recorded; access is granted in Fabric by hand |
 | `create_team_group`, `team_member_object_ids` | no (`false`, `[]`) | optional team group |
 | `deploy_environment`, `tags` | no | see [variables.tf](variables.tf) |

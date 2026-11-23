@@ -163,3 +163,80 @@ run "rejects_bad_department" {
 
   expect_failures = [var.department]
 }
+
+# --- Optional environment and names from outside ---
+
+run "no_environment_by_default" {
+  command = plan
+
+  assert {
+    condition     = !contains(keys(azurerm_machine_learning_workspace.this.tags), "environment")
+    error_message = "Without an environment there should be no environment tag (one workspace per department)."
+  }
+}
+
+run "environment_goes_into_names_and_tags" {
+  command = plan
+
+  variables {
+    environment = "dev"
+  }
+
+  assert {
+    condition     = azurerm_machine_learning_workspace.this.name == "mlw-manufacturing-dev"
+    error_message = "With environment = dev the workspace should be called mlw-manufacturing-dev."
+  }
+
+  assert {
+    condition     = azurerm_machine_learning_workspace.this.tags["environment"] == "dev"
+    error_message = "The environment should be a tag."
+  }
+
+  assert {
+    condition     = length(azurerm_key_vault.workspace.name) <= 24 && can(regex("^[a-z0-9]{3,24}$", azurerm_storage_account.workspace.name))
+    error_message = "Names must still fit Azure's limits with an environment."
+  }
+}
+
+run "names_from_outside_win" {
+  command = plan
+
+  variables {
+    names = {
+      workspace       = "mlw-mfg-weu-01"
+      storage_account = "stmlmfgweu01"
+    }
+  }
+
+  assert {
+    condition     = azurerm_machine_learning_workspace.this.name == "mlw-mfg-weu-01" && azurerm_storage_account.workspace.name == "stmlmfgweu01"
+    error_message = "Names given in var.names must be used as they are."
+  }
+
+  assert {
+    condition     = azurerm_key_vault.workspace.name == output.resource_names.key_vault && startswith(azurerm_key_vault.workspace.name, "kv-ml-manufactur-")
+    error_message = "Names left out should keep the module's default."
+  }
+}
+
+run "rejects_invalid_storage_account_name" {
+  command = plan
+
+  variables {
+    names = {
+      storage_account = "st-ml-with-hyphens"
+    }
+  }
+
+  expect_failures = [var.names]
+}
+
+run "rejects_bad_environment" {
+  command = plan
+
+  variables {
+    environment = "Production"
+  }
+
+  expect_failures = [var.environment]
+}

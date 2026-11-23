@@ -8,6 +8,8 @@ Terraform modules for machine learning on Azure, proposed to the platform team.
 | [`modules/ml-project`](modules/ml-project/README.md) | once per ML use case | Login identity for the project's GitHub Actions, access to the workspace, optional team group, outputs for GitHub variables |
 
 These modules are run from the platform team's own repo, never from here.
+Names have defaults but can come from outside (`names`), to fit the platform's
+naming rules; an `environment` (dev/prod) is optional and off by default.
 See [AGENTS.md](AGENTS.md) for the workflow, commands and rules.
 
 ```bash

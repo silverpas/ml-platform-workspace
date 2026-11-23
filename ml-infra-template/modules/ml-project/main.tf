@@ -13,8 +13,15 @@ data "azurerm_machine_learning_workspace" "department" {
 }
 
 locals {
-  project_id = "${var.department}-${var.name}" # e.g. manufacturing-tool-wear
+  # e.g. manufacturing-tool-wear, or manufacturing-tool-wear-dev with an environment
+  project_id = "${var.department}-${var.name}${var.environment == null ? "" : "-${var.environment}"}"
   location   = data.azurerm_machine_learning_workspace.department.location
+
+  # A name given in var.names wins; otherwise the default.
+  names = {
+    identity   = coalesce(var.names.identity, "id-ml-${local.project_id}")
+    team_group = coalesce(var.names.team_group, "grp-ml-${local.project_id}")
+  }
 
   tags = merge(var.tags, {
     department   = var.department
@@ -22,7 +29,7 @@ locals {
     owner        = var.owner
     data_domains = join(",", var.data_domains)
     managed_by   = "terraform"
-  })
+  }, var.environment == null ? {} : { environment = var.environment })
 
   # GitHub's login service, and the audience Azure expects for it.
   github_issuer   = "https://token.actions.githubusercontent.com"
@@ -31,7 +38,7 @@ locals {
 
 # 1. The project's identity.
 resource "azurerm_user_assigned_identity" "project" {
-  name                = "id-ml-${local.project_id}"
+  name                = local.names.identity
   location            = local.location
   resource_group_name = var.workspace_resource_group_name
   tags                = local.tags
@@ -70,7 +77,7 @@ resource "azurerm_role_assignment" "workspace" {
 resource "azuread_group" "team" {
   count = var.create_team_group ? 1 : 0
 
-  display_name     = "grp-ml-${local.project_id}"
+  display_name     = local.names.team_group
   description      = "Team of ML use case ${var.name} (${var.department}). Owner: ${var.owner}."
   security_enabled = true
   members          = var.team_member_object_ids

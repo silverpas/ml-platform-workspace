@@ -52,7 +52,9 @@ requirements.txt        jsonschema, pyyaml, pytest (tests only)
 
 In this example only, module `source` points to `../../ml-infra-template/modules/...`
 so it validates locally. In the real repo it points to wherever the platform
-team keeps the modules.
+team keeps the modules. The modules use default names (`mlw-<department>`, ...);
+if the platform defines names centrally, `ml/main.tf` passes them in with
+`names = { ... }`. The cluster name goes from `ml_workspace` to `ml_project`.
 
 ## Workflow: onboard a new ML use case
 

@@ -21,27 +21,36 @@ data "azurerm_client_config" "current" {}
 locals {
   location = data.azurerm_resource_group.this.location
 
+  # "-dev" when an environment is given, "" otherwise (the default).
+  env_part = var.environment == null ? "" : "-${var.environment}"
+
   # Storage account, key vault and container registry names must be unique in
   # ALL of Azure, max 24 characters, and some allow no hyphens. So: a short
   # prefix + the department without hyphens + 6 characters derived from the
-  # resource group (always the same for the same group, different for others).
+  # resource group and environment (always the same for the same inputs,
+  # different for others).
   dept_compact = substr(replace(var.department, "-", ""), 0, 10)
-  suffix       = substr(md5(data.azurerm_resource_group.this.id), 0, 6)
+  suffix       = substr(md5("${data.azurerm_resource_group.this.id}${local.env_part}"), 0, 6)
 
-  names = {
-    workspace          = "mlw-${var.department}"
+  default_names = {
+    workspace          = "mlw-${var.department}${local.env_part}"
     storage_account    = "stml${local.dept_compact}${local.suffix}"
     key_vault          = "kv-ml-${local.dept_compact}-${local.suffix}"
     container_registry = "crml${local.dept_compact}${local.suffix}"
-    log_analytics      = "log-mlw-${var.department}"
-    app_insights       = "appi-mlw-${var.department}"
+    log_analytics      = "log-mlw-${var.department}${local.env_part}"
+    app_insights       = "appi-mlw-${var.department}${local.env_part}"
+  }
+
+  # A name given in var.names wins; otherwise the default above.
+  names = {
+    for key, default in local.default_names : key => coalesce(var.names[key], default)
   }
 
   tags = merge(var.tags, {
     department = var.department
     owner      = var.owner
     managed_by = "terraform"
-  })
+  }, var.environment == null ? {} : { environment = var.environment })
 }
 
 # 1. Storage for the workspace's files.
@@ -145,7 +154,7 @@ resource "azurerm_machine_learning_compute_cluster" "cpu" {
 resource "azurerm_machine_learning_compute_cluster" "gpu" {
   count = var.gpu ? 1 : 0
 
-  name                          = "gpu-cluster"
+  name                          = var.gpu_cluster_name
   location                      = local.location
   machine_learning_workspace_id = azurerm_machine_learning_workspace.this.id
   vm_size                       = var.gpu_vm_size

@@ -48,6 +48,8 @@ module "ml_workspace" {
   source   = "../../ml-infra-template/modules/ml-workspace" # ASSUMPTION: in the real repo, wherever the platform keeps modules
   for_each = local.workspaces
 
+  # ASSUMPTION: names follow the module's defaults (mlw-<department>, ...). If the
+  # platform defines names centrally, pass them here: names = { workspace = ... }.
   department          = each.value.department
   resource_group_name = each.value.resource_group
   owner               = each.value.owner
@@ -65,6 +67,7 @@ module "ml_project" {
   owner                         = each.value.owner
   github_repo                   = each.value.github_repo
   gpu                           = lookup(each.value, "gpu", false)
+  compute_name                  = lookup(each.value, "gpu", false) ? module.ml_workspace[each.value.department].gpu_cluster_name : module.ml_workspace[each.value.department].cpu_cluster_name
   workspace_name                = module.ml_workspace[each.value.department].workspace_name
   workspace_resource_group_name = module.ml_workspace[each.value.department].resource_group_name
 
