@@ -25,10 +25,10 @@ Jargon in one line each:
 
 | Step | What happens | This repo? |
 |---|---|---|
-| 0. Explore | Try the idea | No |
+| 0. Explore | Try the idea on a laptop | No |
 | 1. Request | Request form (ml-requests repo; same field names as the YAML) | No |
-| 2. Qualify | Go → **add one use case YAML** (and the department's workspace YAML if new) | **Yes** |
-| 3. Data and priority | `reads` and `predictions_table`; access granted in Fabric | **Yes** |
+| 2. Qualify | Go / not now / no | No (ml-requests repo) |
+| 3. Data and priority | Data and priority clear → **add one use case YAML** (and the department's workspace YAML if new); `reads` and `predictions_table`, access granted in Fabric | **Yes** |
 | 4. Build | Hand the `github_variables` output to the project team | **Yes: hand-over** |
 | 5. Run and review | Retire = `status: retired` | **Yes** |
 

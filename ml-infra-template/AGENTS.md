@@ -24,10 +24,10 @@ Jargon in one line each:
 
 | Step | What happens | This repo? |
 |---|---|---|
-| 0. Explore | Try the idea | No |
+| 0. Explore | Try the idea on a laptop | No |
 | 1. Request | Request form | No |
-| 2. Qualify | Go → one registry YAML in the platform repo → one `ml-project` | **Yes: the module used** |
-| 3. Data and priority | Data access (`data_domains`) | **Yes: placeholders** |
+| 2. Qualify | Go / not now / no | No |
+| 3. Data and priority | Data access (`data_domains`); at the end: one registry YAML in the platform repo → one `ml-project` | **Yes: the module used; data access as placeholders** |
 | 4. Build | The project repo trains in the workspace | Uses what was created |
 | 5. Run and review | Scoring writes to a Gold `ml_` table in Fabric | Uses what was created |
 

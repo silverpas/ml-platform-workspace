@@ -25,8 +25,8 @@ request issue and tick it together with the requester.
 - [ ] There are enough examples of what we want to predict (e.g. enough failures).
 
 **Fit**
-- [ ] CPU is enough, or the GPU need is real (deep learning) and the
-      department's workspace has, or can get, a GPU cluster.
+- [ ] CPU is enough, or the GPU need is real (deep learning) and GPU quota
+      can be requested from Microsoft (each project gets its own cluster).
 - [ ] Predictions can be scored in batch (e.g. nightly). Real-time answers
       are out of scope for now.
 - [ ] First review date agreed.

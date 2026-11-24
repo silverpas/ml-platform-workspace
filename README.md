@@ -17,14 +17,14 @@ its own GitHub repo, so each one is self-contained.
 ## How they fit together
 
 ```
- 0. Explore     try the idea anywhere (no request needed)
+ 0. Explore     try the idea on your laptop (no request, no shared playground)
  1. Request     ml-requests: issue form                         → label "new"
  2. Qualify     platform lead checks it                         → "approved"
-                ├─ cdp-ml-onboarding: add one ml-project block (module from ml-infra-template)
-                │    → Azure access + login identity for the project
+ 3. Data        data access and priority agreed; at the end, the project setup:
+                ├─ cdp-ml-onboarding: add one use case YAML (modules from ml-infra-template)
+                │    → the project's cluster, identity and Azure access
                 └─ new repo from ml-project-template, IDs set as GitHub variables
- 3. Data        data access granted (Fabric)
- 4. Build       ml-project-template: train → evaluate → approval gate → champion
+ 4. Build       ml-project-template: train → evaluate → approval gate → champion → export
  5. Run/review  nightly batch scoring in Azure ML → Fabric lakehouse → Power BI;
                 quarterly review: keep, retrain or retire
 ```

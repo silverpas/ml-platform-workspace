@@ -21,10 +21,10 @@ Jargon in one line each:
 
 | Step | What happens | This repo? |
 |---|---|---|
-| 0. Explore | Try the idea, no request needed | No |
+| 0. Explore | Try the idea on a laptop, no request needed | No |
 | 1. Request | Fill in the issue form | **Yes** |
 | 2. Qualify | Platform lead checks value, data, owner, risk tier → go / not now / no | **Yes** |
-| 3. Data and priority | Data access and priority agreed | **Yes: tracked on the issue** |
+| 3. Data and priority | Data access and priority agreed; **at the end: setup** | **Yes: tracked on the issue** |
 | 4. Build | Project repo from the template; work happens there | Link only |
 | 5. Run and review | First review date from the request | Link only |
 
@@ -35,7 +35,7 @@ Jargon in one line each:
 .github/ISSUE_TEMPLATE/config.yml               no blank issues; link for "just exploring"
 docs/process.md             steps 0-5, who does what, labels
 docs/qualify-checklist.md   what the platform lead checks before "go"
-docs/setup-checklist.md     after "go": form → registry YAML, project repo, hand-over
+docs/setup-checklist.md     end of step 3: form → registry YAML, project repo, hand-over
 ```
 
 ## The form and the registry file
@@ -53,9 +53,10 @@ for the decision. The mapping table is in `docs/setup-checklist.md`.
 2. **Platform lead**: sets `qualifying`, copies `docs/qualify-checklist.md` into
    a comment and goes through it with the requester.
 3. Decision: `approved`, `deferred` or `declined`, with a short comment why.
-4. If approved: follow `docs/setup-checklist.md` (registry pull request in the
-   platform repo, project repo, data access, hand-over), then set `set-up` and
-   close the issue with links.
+4. If approved: step 3, data access and priority, tracked on the issue. When
+   both are clear (not before), follow `docs/setup-checklist.md` (registry pull
+   request in the platform repo, project repo, hand-over), then set `set-up`
+   and close the issue with links.
 
 Labels: `new` → `qualifying` → `approved` / `deferred` / `declined` → `set-up`.
 Create them once under *Issues → Labels*.
@@ -71,7 +72,8 @@ None needed. To preview the form, push to GitHub and open *Issues → New issue*
 
 - **No secrets and no real company data** in issues or files.
 - Generic examples only: use case `tool-wear`, department `manufacturing`.
-- Do not start a project repo or infrastructure before the request is `approved`.
+- Do not start a project repo or infrastructure before the request is `approved`
+  and step 3 (data and priority) is done.
 - Keep the form short: only fields the platform lead needs to decide or set up.
 - **Form and registry stay in sync**: when the registry schema gets a new or
   changed field, update the form and the table in `docs/setup-checklist.md`.

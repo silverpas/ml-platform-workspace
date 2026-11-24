@@ -39,12 +39,15 @@ This design proposes **self-service with control**:
 
 | Step | What happens | Who | Output | Runs on |
 |---|---|---|---|---|
-| **0. Explore** (optional) | Try the idea, no request needed | Anyone | An idea worth a request | Fabric *(in place)*, playground workspace *(proposed)* |
+| **0. Explore** (optional) | Try the idea, no request needed | Anyone | An idea worth a request | Own laptop, data the person may already see (no shared playground) |
 | **1. Request** | Describe problem, value and how predictions will be used | Requester | Request issue (form) | GitHub, `ml-requests` repo *(proposed)* |
-| **2. Qualify** | Is there value? Is ML the right tool? Owner and risk tier | Platform lead + requester | Go: one YAML file in the platform repo, repo from template | ML registry YAML + Terraform modules *(proposed)* |
-| **3. Data and priority** | Is the data in the platform? If not, raise a data request | Platform lead, data owners | Data access, priority | Fabric data domains *(in place)*, data intake *(proposed)* |
-| **4. Build** | Project from template: train, register, approval gate | Model owner and team | Approved model version | Azure ML *(proposed)*, GitHub template *(proposed)* |
+| **2. Qualify** | Is there value? Is ML the right tool? Owner and risk tier | Platform lead + requester | Go / not now / no | The request issue |
+| **3. Data and priority** | Is the data in the platform? If not, raise a data request. **At the end: project setup** | Platform lead, data owners | Data access, priority; one YAML file in the platform repo, repo from template | Fabric data domains *(in place)*, ML registry YAML + Terraform modules *(proposed)* |
+| **4. Build** | Project from template: train, register, approval gate, model export | Model owner and team | Approved and exported model version | Azure ML *(decided)*, GitHub template *(proposed)* |
 | **5. Run and review** | Monitor; keep, retrain or retire | Model owner | Review decision | Power BI *(in place)*, endpoint or local *(proposed)* |
+
+The project is set up **at the end of step 3**, not right after "go": only
+when the data and the priority are clear, so no workspace or repo waits empty.
 
 **Risk tiers** (set in step 2) decide how strict later steps are:
 
@@ -59,9 +62,13 @@ This design proposes **self-service with control**:
 ### 4.1 Setup (once per use case)
 
 - **Terraform** in the central platform repo *(in place)* creates the infrastructure.
-- **One Azure ML workspace per department** *(proposed)*, shared by that department's
-  use cases. It holds experiments, the model registry and CPU/GPU compute.
+- **Azure ML is the ML platform** *(decided)*: training, tracking, registry and scoring.
+- **One Azure ML workspace per department** *(decided)*, shared by that department's
+  use cases. It holds experiments and the model registry.
   Start with one workspace; add more only when other departments bring ML cases.
+- **One compute cluster per use case** *(decided)*, with the project's own identity
+  and tags. The identity decides what data the project can reach; the tags show
+  the costs per project. The cluster scales to 0 nodes when idle.
 - **One GitHub repo per use case** *(proposed)*, created from the template repo.
 - **Metadata-driven onboarding** *(proposed)*: ordering a project = adding **one
   YAML file** in the platform repo's ML registry, in a pull request, plus **one repo
@@ -81,12 +88,16 @@ Terraform reads the files → ml-workspace / ml-project modules → plan → app
 
 ```
 Fabric data (versioned snapshot)
-  → Training (Azure ML job, MLflow tracking)
+  → Training (Azure ML job on the project's cluster, MLflow tracking, estimated cost)
   → Approval gate (Azure ML registry, owner + reviewer)
+  → Model export (standard MLflow folder: runs in Azure ML, Fabric or locally)
   → Scoring: Azure ML batch job, nightly (default; optional: Fabric PREDICT)
   → Predictions table (Fabric lakehouse)
   → Power BI (existing reports)
 ```
+
+Until the Fabric connection exists (section 9), the same chain runs with a
+public file as input and a job output folder as the predictions table.
 
 ### 4.3 Scoring options
 
@@ -115,6 +126,20 @@ Every training run logs which data it used:
 - **Exported files** (frozen copy): write the training data as Parquet to a dated folder,
   e.g. `Files/ml/<use-case>/<date>/`. Needed when Azure ML reads through the OneLake
   datastore (Files folder only), and safer for long-term reproducibility.
+
+### 4.5 Portable by design
+
+- **Data reading behind one function** (`read_data` in the project template).
+  Today it reads CSV, Parquet and local Delta tables. Adding Fabric means one
+  more branch in that function, not changes all over the code.
+- **Model export after approval.** Once a version is approved, it is saved as a
+  standard MLflow model folder (pyfunc flavor, input signature, pinned
+  packages). The same folder can be registered in Azure ML or Fabric, or loaded
+  on a laptop.
+- **Estimated cost per run.** Every job logs its duration and an estimated cost
+  (duration × the price per hour of the cluster's machine type) to MLflow. It is
+  an estimate for comparing runs; the bill comes from Azure Cost Management,
+  split per project by the cluster's tags.
 
 ## 5. Repos and templates
 
@@ -163,7 +188,7 @@ Notes:
 ### 5.2 Terraform modules
 
 `ml-workspace`, **once per department**: Azure ML workspace with storage, key
-vault, Application Insights, a CPU cluster that scales to 0, and an optional GPU cluster.
+vault and Application Insights. No compute: clusters belong to the projects.
 
 `ml-project`, **once per use case**. Nobody calls it by hand: the platform repo's
 Terraform calls it once for every file in the ML registry. A use case is described
@@ -184,9 +209,12 @@ predictions_table: ml_tool_wear_predictions   # Gold table, `ml_` prefix
 ```
 
 `ml-project` creates:
+- a compute cluster for this use case (CPU by default, GPU if `gpu: true`),
+  scaling to 0, running as the project's identity and tagged with the use case;
 - an Entra ID group with a limited data-scientist role on the department's
   workspace (never Owner or Contributor);
-- a workload identity for this repo's GitHub workflows, trusting only that repo;
+- the project's identity, used by the cluster and by this repo's GitHub
+  workflows (trusting only that repo);
 - read access to the platform data, write access to the Gold `ml_` predictions
   table (placeholders until the Fabric side is clear);
 - outputs: the IDs the project repo needs as GitHub variables.
@@ -210,6 +238,7 @@ The module's exact design must follow how the platform team already structures T
 - Infrastructure code inside project repos (the platform team provisions it).
 - Online endpoints, automatic retraining on drift, feature store.
 - More than two pipeline types (`train-register`, `batch-score`).
+- A shared exploration workspace ("playground"): exploring happens locally.
 
 ## 8. Open questions
 
@@ -217,7 +246,7 @@ The module's exact design must follow how the platform team already structures T
 - Does the Terraform module fit how the platform team structures its repo? If the
   platform already has a registry with a resolver (YAML → contract → Terraform), the
   ML registry files should become a new object type there.
-- How do Azure ML and Fabric authenticate to each other?
+- How do Azure ML and Fabric connect over the network? See section 9.
 - Retirement criteria for models (e.g. no predictions consumed for X months).
 - Which environments (dev/test/prod) are needed, and when? **Proposed default:
   one workspace per department.** Inside it, the approval gate (candidate →
@@ -225,7 +254,35 @@ The module's exact design must follow how the platform team already structures T
   dev/prod workspaces stay optional, for platforms whose rules require them; the
   platform team decides.
 
-## 9. Build order for this workspace
+## 9. Later: the Fabric connection (documented, not built)
+
+The templates work end to end without Fabric (public data, a job output folder
+for predictions). Connecting to Fabric is a later milestone, once the platform
+team has decided on networking.
+
+**Identity (approach already tested in a similar setup).** The compute
+cluster's identity is added to a role on the Fabric lakehouse (or its
+workspace). Jobs on that cluster can then read and write OneLake with a token
+for that identity. With one cluster per project, each project only gets the
+access granted to its own identity.
+
+**Networking options** (the platform team decides):
+
+| Option | How | Notes |
+|---|---|---|
+| Public endpoints | Jobs reach OneLake over its public address; access is decided by identity | Simplest; only possible if the Fabric tenant allows public access |
+| Private endpoints | Azure ML's managed virtual network reaches Fabric through a private link | Needed if Fabric blocks public access; more setup, to verify which Fabric private link fits |
+| Different regions | Azure ML and the Fabric capacity may sit in different Azure regions | Check data residency rules, latency and data transfer costs |
+
+**What changes in the code:**
+1. `read_data` gets a branch for OneLake table addresses (`abfss://…/Tables/…`),
+   with a token for the job's identity; it logs the table's Delta version.
+2. `write_predictions` uses the same token to write the Gold `ml_` table.
+3. The job inputs point to the Gold tables instead of uploaded files.
+4. `ml-project` grants the lakehouse role to the cluster's identity
+   (today a placeholder: `data_access_todo`).
+
+## 10. Build order for this workspace
 
 All four repos are built in one workspace first, tested **locally on public
 data** using the
@@ -239,7 +296,16 @@ data** using the
 5. Platform repo onboarding example.
 6. Request form and process.
 
-## 10. References
+Then, phase 2 (templates working end to end in a personal Azure ML sandbox):
+
+7. Decisions in the docs (this section, cluster per project, setup at the end of step 3).
+8. Data reading behind one function.
+9. Model export after approval.
+10. Estimated cost per run.
+11. Terraform: one cluster per project, with its identity and tags.
+12. End-to-end run in an Azure ML sandbox (CPU only, small quota).
+
+## 11. References
 
 - [Epiroc: steel quality with Azure Machine Learning](https://www.microsoft.com/en/customers/story/1653030140221000726-epiroc-manufacturing-azure-machine-learning)
 - [Predict steel quality with Azure AutoML and ESML](https://techcommunity.microsoft.com/blog/azure-ai-foundry-blog/predict-steel-quality-with-azure-automl-in-manufacturing/3616176)

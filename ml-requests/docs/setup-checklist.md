@@ -1,6 +1,7 @@
-# Setup checklist (after "go")
+# Setup checklist (end of step 3)
 
-For the platform lead. Turns an approved request into a working project:
+For the platform lead, after "go" **and** once the data and the priority are
+clear (step 3). Turns an approved request into a working project:
 **one YAML file** in the platform repo and **one repo** from the template.
 Nobody writes Terraform for it.
 

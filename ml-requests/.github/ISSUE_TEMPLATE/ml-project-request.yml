@@ -1,6 +1,6 @@
 # The request form (step 1). GitHub shows it under Issues → New issue.
 # Fields marked "→ registry" become the use case's YAML file in the platform
-# repo (registry/ml_use_cases/<department>__<use_case_id>.yaml) after "go".
+# repo (registry/ml_use_cases/<department>__<use_case_id>.yaml) at the end of step 3.
 # Keep the field formats in sync with that file's JSON schema.
 name: ML project request
 description: Propose a new machine learning use case.

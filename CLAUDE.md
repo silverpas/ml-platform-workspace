@@ -55,8 +55,17 @@ become its own GitHub repo. The design is in @docs/ml-platform-design.md
   same as the registry YAML's `predictions_table`). Locally, the same Delta table
   goes to `data/predictions/<predictions_table>/`.
   `notebooks/fabric_batch_score.ipynb` (option A, PREDICT in Fabric) is optional only.
-- One Azure ML workspace per department (`ml-workspace` module), one
-  `ml-project` per use case.
+- **Azure ML is the ML platform.** One Azure ML workspace per department
+  (`ml-workspace` module, no compute), one `ml-project` per use case, which
+  creates the project's **own cluster** with the project's identity and tags
+  (data access and costs per project).
+- **Project setup at the end of step 3** (data and priority clear), not right
+  after "go". No shared playground: step 0 is local.
+- **Portable**: data reading behind one function (`src/data.py`), the approved
+  model exported as a standard MLflow folder (`src/export.py`), an estimated
+  cost per run in MLflow.
+- **Fabric connection is documented, not built** (design section 9). Until then
+  the jobs use uploaded files and write predictions to a job output folder.
 - **Metadata-driven onboarding**: a new ML use case is one YAML file in the
   platform repo's ML registry (`registry/ml_use_cases/<department>__<id>.yaml`,
   checked against a JSON schema with `jsonschema`). Terraform reads the files and
@@ -113,6 +122,15 @@ Update this section when commands change.
 5. `cdp-ml-onboarding`: ML registry (YAML + schema), Terraform reading it, checklist, validated ✅
 6. `ml-requests`: issue form (same fields as the registry YAML) and process docs ✅
 7. Final pass: every `AGENTS.md` matches its folder ✅
+
+Phase 2: end to end in a personal Azure ML sandbox (CPU only, small quota).
+
+8. Decisions in the docs (cluster per project, setup at end of step 3, Fabric later) ✅
+9. `ml-project-template`: data reading behind one function (`src/data.py`)
+10. `ml-project-template`: model export after approval (`src/export.py`)
+11. `ml-project-template`: estimated cost per run
+12. `ml-infra-template` + `cdp-ml-onboarding`: one cluster per project
+13. Sandbox run end to end: jobs on uploaded data, guide `docs/azure-sandbox.md`
 
 ## How to work with me
 

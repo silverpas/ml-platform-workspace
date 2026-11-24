@@ -7,7 +7,9 @@ Example used below: use case `tool-wear` in department `manufacturing`.
 
 ## 0. Before you start
 
-- [ ] The request is approved (step 2 "Qualify"): there is a **model owner**
+- [ ] The request is approved (step 2 "Qualify") and step 3 is done: the data
+      and the priority are clear. Projects are set up at the end of step 3.
+- [ ] There is a **model owner**
       and a **risk tier** (`exploration`, `decision_support` or `production_critical`).
 - [ ] The data the model needs is in the platform, and you know its tables
       (`<domain>.<layer>.<table>`, e.g. `manufacturing.gold.fact_machine_sensors`).

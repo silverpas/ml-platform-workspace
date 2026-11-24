@@ -5,17 +5,18 @@ and the approval gate in step 4); everything else is self-service.
 
 | Step | What happens | Who | Where |
 |---|---|---|---|
-| 0. Explore | Try the idea, no request needed | Anyone | Fabric notebooks, a laptop |
+| 0. Explore | Try the idea, no request needed | Anyone | Your own laptop |
 | 1. Request | Fill in the request form | Requester | This repo: an issue |
 | 2. Qualify | Is there value? Is ML the right tool? Owner and risk tier | Platform lead + requester | This repo: the same issue |
-| 3. Data and priority | Is the data in the platform? Who grants access? When do we start? | Platform lead, data owners | The issue, then Fabric |
+| 3. Data and priority | Is the data in the platform? Who grants access? When do we start? Then: setup | Platform lead, data owners | The issue, then Fabric |
 | 4. Build | Train, evaluate, approve a model | Model owner and team | The project repo |
 | 5. Run and review | Nightly predictions; every quarter: keep, retrain or retire? | Model owner | The project repo |
 
 ## 0. Explore (optional)
 
-Trying an idea needs no request: a notebook in Fabric or on your laptop is fine.
-Use only data you are already allowed to see. Open a request when the idea
+Trying an idea needs no request: a notebook on your laptop is fine. There is
+no shared "playground" workspace. Use only data you are already allowed to see,
+or public data. Open a request when the idea
 looks worth a real project, and tell us what you tried.
 
 ## 1. Request
@@ -50,9 +51,10 @@ or in a short call. The answer is one of:
 - Data not in the platform yet: raise a data request with the data team and
   link it on the issue. The project waits for it.
 
-## Setup (after "go")
+## Setup (at the end of step 3)
 
-The platform lead follows [setup-checklist.md](setup-checklist.md): one YAML
+Only when the data and the priority are clear, so no repo or cluster waits
+empty (and costs nothing for nothing). The platform lead follows [setup-checklist.md](setup-checklist.md): one YAML
 file in the platform repo's ML registry, one project repo from the template,
 the IDs handed over. Then the label becomes `set-up` and the issue is closed
 with links to both.
