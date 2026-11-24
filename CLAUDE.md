@@ -76,7 +76,8 @@ become its own GitHub repo. The design is in @docs/ml-platform-design.md
 
 ## Tech choices
 
-Python 3.11, pandas, scikit-learn, LightGBM, MLflow, pytest, ruff. GitHub
+Python 3.11, pandas, scikit-learn, LightGBM, MLflow (2.16: the newest version
+Azure ML supports; MLflow 3 fails there when saving models), pytest, ruff. GitHub
 Actions with OIDC (`azure/login`), deploy behind a GitHub environment with
 required reviewers. Terraform with `azurerm` and `azuread`, versions pinned.
 
