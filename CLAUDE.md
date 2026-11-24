@@ -88,6 +88,7 @@ python3.11 -m venv .venv && source .venv/bin/activate
 pip install -r requirements.txt
 python -m src.prep && python -m src.train && python -m src.evaluate && python -m src.register
 python -m src.register --promote <version>
+python -m src.export                                # approved model -> outputs/export/
 python -m src.score --input data/raw/ai4i2020.csv   # Delta table in data/predictions/
 pytest
 ruff check . && ruff format --check .
