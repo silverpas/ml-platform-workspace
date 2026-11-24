@@ -4,8 +4,9 @@ Plugs **one ML use case** into its department's existing Azure ML workspace.
 The platform team adds one `module` block per use case in its own Terraform repo
 (see [examples/basic/main.tf](examples/basic/main.tf)).
 
-This module does **not** create the workspace or compute clusters. They come
-from the [`ml-workspace`](../ml-workspace/README.md) module, once per department.
+This module does **not** create the workspace. It comes from the
+[`ml-workspace`](../ml-workspace/README.md) module, once per department. It
+**does** create the project's own compute cluster.
 
 ## What it creates
 
@@ -13,16 +14,18 @@ from the [`ml-workspace`](../ml-workspace/README.md) module, once per department
 |---|---|
 | User-assigned managed identity `id-ml-<department>-<name>` | The "robot account" the project's GitHub workflows and jobs run as |
 | 2 federated credentials (GitHub OIDC) | GitHub may log in as that identity **without any secret**, but only from this repo's `main` branch and its approval-gated environment |
+| Compute cluster `cpu-<name>` (or `gpu-<name>`) | The project's own machines: run as the project identity (data access per project), tagged with `use_case` (costs per project), **scale to 0** when idle, at most `max_nodes` (default 1) |
 | Role assignment *AzureML Data Scientist* on the workspace | Submit jobs and register models; cannot change the workspace or compute |
+| Role assignment *AcrPull* on the workspace's container registry | The cluster loads the job environments with the project identity (the registry has no admin password) |
 | *Optional:* Entra ID group `grp-ml-<department>-<name>` + the same role | Only with `create_team_group = true`; needs permission to create groups (often only IT) |
 
 All resources are tagged with `department`, `use_case`, `owner` and `data_domains`
-(and `environment`, if given). The project uses the department's shared
-`cpu-cluster` (or `gpu-cluster` with `gpu = true`); the `compute_name` output
-says which. If the workspace's clusters have other names, pass the right one
-in `compute_name`.
+(and `environment`, if given). The `cluster` output (name, machine type, idle
+minutes) goes to the project team: the name into `jobs/*.yml` (`compute:`),
+the machine type into `config.yml` (`cost`). Cluster names have at most 16
+characters; longer defaults are shortened with a 6-character suffix.
 
-**Names from outside:** `names = { identity = "...", team_group = "..." }`
+**Names from outside:** `names = { identity = "...", team_group = "...", cluster = "..." }`
 replaces the default names; anything left out keeps its default. The optional
 `environment` (off by default) must match the workspace's and adds
 `-<environment>` to the default names.
@@ -37,8 +40,10 @@ replaces the default names; anything left out keeps its default. The optional
 | `github_repo` | yes | `example-org/ml-tool-wear` |
 | `workspace_name` | yes | the department workspace |
 | `workspace_resource_group_name` | yes | its resource group |
-| `gpu` | no (`false`) | `true` = use the shared GPU cluster (ml-workspace with `gpu = true`) |
-| `compute_name` | no | the cluster name from ml-workspace, when it is not `cpu-cluster`/`gpu-cluster` |
+| `container_registry_id` | yes, unless `create_role_assignments = false` | ml-workspace output `container_registry_id` |
+| `gpu` | no (`false`) | `true` = a GPU cluster (needs GPU quota from Microsoft first) |
+| `vm_size`, `max_nodes`, `idle_minutes_before_scale_down` | no (`Standard_DS3_v2`, `1`, `15`) | the cluster; must fit the subscription's quota |
+| `create_role_assignments` | no (`true`) | `false` when you may not assign roles (sandbox); see `roles_to_assign_by_hand` |
 | `environment` | no (none) | `dev`, `prod`: only if the workspace has one |
 | `names` | no (defaults) | `{ identity = "uai-mfg-toolwear-01" }` |
 | `data_domains` | no (`[]`) | `["production"]`: recorded; access is granted in Fabric by hand |
@@ -47,7 +52,9 @@ replaces the default names; anything left out keeps its default. The optional
 
 **Who can apply it:** the role assignments need Owner, User Access
 Administrator or *Role Based Access Control Administrator* on the workspace's
-resource group. Contributor is not enough.
+resource group. Contributor is not enough: with only Contributor, set
+`create_role_assignments = false` and ask for the roles in the
+`roles_to_assign_by_hand` output.
 
 ## After `terraform apply` (done by the platform team)
 

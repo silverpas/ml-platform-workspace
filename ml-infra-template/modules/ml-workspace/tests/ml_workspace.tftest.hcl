@@ -27,52 +27,6 @@ variables {
   owner               = "ml-platform-team"
 }
 
-run "cpu_cluster_scales_to_zero" {
-  command = plan
-
-  assert {
-    condition     = azurerm_machine_learning_compute_cluster.cpu.name == "cpu-cluster"
-    error_message = "The CPU cluster must be called cpu-cluster: the project template's jobs use that name."
-  }
-
-  assert {
-    condition     = azurerm_machine_learning_compute_cluster.cpu.scale_settings[0].min_node_count == 0
-    error_message = "The CPU cluster must scale to 0 machines so it costs nothing when idle."
-  }
-
-  assert {
-    condition     = azurerm_machine_learning_compute_cluster.cpu.scale_settings[0].scale_down_nodes_after_idle_duration == "PT15M"
-    error_message = "Idle machines should be switched off after 15 minutes by default."
-  }
-}
-
-run "no_gpu_by_default" {
-  command = plan
-
-  assert {
-    condition     = length(azurerm_machine_learning_compute_cluster.gpu) == 0
-    error_message = "No GPU cluster unless gpu = true."
-  }
-}
-
-run "gpu_on_request" {
-  command = plan
-
-  variables {
-    gpu = true
-  }
-
-  assert {
-    condition     = azurerm_machine_learning_compute_cluster.gpu[0].vm_size == "Standard_NC4as_T4_v3"
-    error_message = "With gpu = true a GPU cluster should be created."
-  }
-
-  assert {
-    condition     = azurerm_machine_learning_compute_cluster.gpu[0].scale_settings[0].min_node_count == 0
-    error_message = "The GPU cluster must also scale to 0."
-  }
-}
-
 run "everything_is_in_the_given_resource_group" {
   command = plan
 

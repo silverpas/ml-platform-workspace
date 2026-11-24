@@ -19,7 +19,7 @@ department: manufacturing
 owner: "[model owner]"
 github_repo: "example-org/ml-tool-wear"
 risk_tier: decision_support
-gpu: false
+gpu: false          # the use case's own cluster: CPU (false) or GPU (true)
 reads:
   - manufacturing.gold.fact_machine_sensors
 predictions_table: ml_tool_wear_predictions

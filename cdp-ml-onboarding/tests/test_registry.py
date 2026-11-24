@@ -65,14 +65,6 @@ def test_use_case_file_name_and_department(path: Path):
     )
 
 
-@pytest.mark.parametrize("path", USE_CASE_FILES, ids=lambda p: p.name)
-def test_gpu_use_case_has_a_gpu_workspace(path: Path):
-    use_case = load(path)
-    if use_case.get("gpu", False):
-        workspace = load(REGISTRY / "ml_workspaces" / f"{use_case['department']}.yaml")
-        assert workspace.get("gpu", False), "the department's workspace has no GPU cluster"
-
-
 def test_each_repo_belongs_to_one_use_case():
     repos = [load(p)["github_repo"].lower() for p in USE_CASE_FILES]
     assert len(repos) == len(set(repos))

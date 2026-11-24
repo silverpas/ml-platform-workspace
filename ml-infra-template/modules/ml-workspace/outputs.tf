@@ -1,5 +1,5 @@
 # Values other code needs after `terraform apply`: the ml-project module
-# (workspace_name, resource_group_name) and the project's jobs (cluster names).
+# (workspace_name, resource_group_name, container_registry_id).
 
 output "workspace_name" {
   description = "Name of the Azure ML workspace. Input workspace_name of ml-project; GitHub variable AZURE_ML_WORKSPACE."
@@ -21,14 +21,9 @@ output "location" {
   value       = local.location
 }
 
-output "cpu_cluster_name" {
-  description = "CPU cluster to use in jobs/*.yml (compute: azureml:<name>)."
-  value       = azurerm_machine_learning_compute_cluster.cpu.name
-}
-
-output "gpu_cluster_name" {
-  description = "GPU cluster name, or null when gpu = false."
-  value       = var.gpu ? azurerm_machine_learning_compute_cluster.gpu[0].name : null
+output "container_registry_id" {
+  description = "Full Azure ID of the workspace's container registry. Input container_registry_id of ml-project (its cluster pulls the job environments from here)."
+  value       = azurerm_container_registry.workspace.id
 }
 
 output "resource_names" {

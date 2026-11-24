@@ -4,8 +4,9 @@
 #   3. Application Insights (+ Log Analytics) - monitoring logs
 #   4. a container registry - the Python environments of the jobs, built once and reused
 #   5. the Azure ML workspace itself
-#   6. a shared CPU cluster that scales to 0 machines (no cost when idle)
-#   7. optionally a GPU cluster, also scaling to 0
+#
+# No compute: each use case gets its own cluster from the ml-project module,
+# with the project's identity and tags (data access and costs per project).
 #
 # Everything is created INSIDE an existing resource group, so `terraform destroy`
 # removes exactly these resources and nothing else in that group.
@@ -123,50 +124,6 @@ resource "azurerm_machine_learning_workspace" "this" {
   tags                          = local.tags
 
   # The workspace's own identity, used to reach its storage, vault and registry.
-  identity {
-    type = "SystemAssigned"
-  }
-}
-
-# 6. Shared CPU cluster for all use cases of the department.
-resource "azurerm_machine_learning_compute_cluster" "cpu" {
-  name                          = var.cpu_cluster_name
-  location                      = local.location
-  machine_learning_workspace_id = azurerm_machine_learning_workspace.this.id
-  vm_size                       = var.cpu_vm_size
-  vm_priority                   = "Dedicated"
-  tags                          = local.tags
-
-  scale_settings {
-    min_node_count                       = 0 # no machines, no cost when idle
-    max_node_count                       = var.cpu_max_nodes
-    scale_down_nodes_after_idle_duration = "PT${var.idle_minutes_before_scale_down}M"
-  }
-
-  # ASSUMPTION: jobs reach OneLake with this cluster identity; the platform team
-  # grants it access in Fabric. Per-project identities come from ml-project.
-  identity {
-    type = "SystemAssigned"
-  }
-}
-
-# 7. Optional GPU cluster (count = 0 means: not created).
-resource "azurerm_machine_learning_compute_cluster" "gpu" {
-  count = var.gpu ? 1 : 0
-
-  name                          = var.gpu_cluster_name
-  location                      = local.location
-  machine_learning_workspace_id = azurerm_machine_learning_workspace.this.id
-  vm_size                       = var.gpu_vm_size
-  vm_priority                   = "Dedicated"
-  tags                          = local.tags
-
-  scale_settings {
-    min_node_count                       = 0
-    max_node_count                       = 1 # GPUs are expensive: one machine at a time
-    scale_down_nodes_after_idle_duration = "PT${var.idle_minutes_before_scale_down}M"
-  }
-
   identity {
     type = "SystemAssigned"
   }

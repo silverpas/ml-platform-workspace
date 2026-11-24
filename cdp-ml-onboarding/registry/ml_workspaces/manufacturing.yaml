@@ -1,9 +1,8 @@
 # yaml-language-server: $schema=../schema/ml_workspace.schema.json
 # Turns on ML for the manufacturing department: one Azure ML workspace, shared
-# by all its ML use cases. Added ONCE, when the department's first use case arrives.
+# by all its ML use cases (each use case gets its own cluster from its own file).
+# Added ONCE, when the department's first use case arrives.
 schema_version: "1.0.0"
 department: manufacturing
 resource_group: rg-ml-manufacturing # ASSUMPTION: an existing group; the platform team names it
 owner: "[platform team]"
-gpu: false
-cpu_max_nodes: 2

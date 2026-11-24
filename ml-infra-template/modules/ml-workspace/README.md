@@ -18,8 +18,10 @@ it, so it fits however the platform team organizes resource groups, and
 | Key vault | `kv-ml-<department>-<6 chars>` | The workspace's own keys and passwords |
 | Log Analytics + Application Insights | `log-mlw-…`, `appi-mlw-…` | Monitoring logs |
 | Container registry (Basic) | `crml<department><6 chars>` | Python environments of the jobs, built once and reused |
-| CPU cluster | `cpu-cluster` | Shared by all use cases; **scales to 0** machines when idle |
-| GPU cluster (optional) | `gpu-cluster` | Only with `gpu = true`; max 1 machine, scales to 0 |
+
+**No compute.** Each use case gets its **own cluster** from `ml-project`, with
+the project's identity and tags, so data access and costs are per project. Pass
+the `container_registry_id` output to `ml-project`.
 
 The `<6 chars>` come from the resource group's ID (and the environment, if
 any): storage, key vault and registry names must be unique in all of Azure.
@@ -35,7 +37,6 @@ names = {
   workspace       = "mlw-mfg-weu-01"
   storage_account = "stmlmfgweu01" # 3-24 lowercase letters/digits, no hyphens
 }
-cpu_cluster_name = "cpu-mfg-01"    # then pass it on to ml-project (compute_name)
 ```
 
 `environment` (e.g. `dev`, `prod`) is **optional and off by default**. The
@@ -49,8 +50,8 @@ environments; it adds `-<environment>` to the default names and an
 
 - **Fixed while it exists:** about 5 EUR per month for the container registry,
   plus a few cents for storage, key vault and logs.
-- **Only when used:** the clusters, per minute while a job runs. Idle machines
-  are switched off after 15 minutes (`idle_minutes_before_scale_down`).
+- **Only when used:** the projects' clusters (see `ml-project`), per minute
+  while a machine is on.
 - Never create a *compute instance* (a personal VM for notebooks) without
   auto-shutdown: it costs every hour it is on.
 
@@ -61,10 +62,9 @@ environments; it adds `-<environment>` to the default names and an
 | `department` | yes | `manufacturing` |
 | `resource_group_name` | yes | an existing resource group |
 | `owner` | yes | `ml-platform-team` |
-| `gpu` | no (`false`) | `true` needs GPU quota from Microsoft first |
 | `environment` | no (none) | `dev`, `prod`: only if the platform requires environments |
 | `names` | no (defaults) | your own names, see above |
-| `cpu_cluster_name`, `gpu_cluster_name`, `cpu_vm_size`, `cpu_max_nodes`, `gpu_vm_size`, `idle_minutes_before_scale_down`, `public_network_access`, `tags` | no | see [variables.tf](variables.tf) |
+| `public_network_access`, `tags` | no | see [variables.tf](variables.tf) |
 
 ## Who can apply it
 

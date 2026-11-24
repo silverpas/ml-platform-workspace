@@ -25,14 +25,13 @@ module "ml_workspace_manufacturing" {
   department          = "manufacturing"
   resource_group_name = "[existing resource group]" # replace
   owner               = "[platform team]"           # replace
-  gpu                 = false
 }
 
 output "workspace" {
   description = "What the ml-project module and the project template need."
   value = {
-    workspace_name      = module.ml_workspace_manufacturing.workspace_name
-    resource_group_name = module.ml_workspace_manufacturing.resource_group_name
-    cpu_cluster_name    = module.ml_workspace_manufacturing.cpu_cluster_name
+    workspace_name        = module.ml_workspace_manufacturing.workspace_name
+    resource_group_name   = module.ml_workspace_manufacturing.resource_group_name
+    container_registry_id = module.ml_workspace_manufacturing.container_registry_id
   }
 }

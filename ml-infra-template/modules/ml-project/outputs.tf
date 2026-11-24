@@ -28,8 +28,26 @@ output "resource_group_name" {
 }
 
 output "compute_name" {
-  description = "Shared cluster to use in the project's jobs/*.yml (compute: azureml:<name>), from ml-workspace."
-  value       = coalesce(var.compute_name, var.gpu ? "gpu-cluster" : "cpu-cluster")
+  description = "The project's own cluster: use it in the project's jobs/*.yml (compute: azureml:<name>)."
+  value       = azurerm_machine_learning_compute_cluster.project.name
+}
+
+output "cluster" {
+  description = "The cluster's settings, for the project's cost estimate (config.yml: cost)."
+  value = {
+    name                           = azurerm_machine_learning_compute_cluster.project.name
+    vm_size                        = local.vm_size
+    max_nodes                      = var.max_nodes
+    idle_minutes_before_scale_down = var.idle_minutes_before_scale_down
+  }
+}
+
+output "roles_to_assign_by_hand" {
+  description = "Only when create_role_assignments = false: the roles someone with the right must give the identity."
+  value = var.create_role_assignments ? [] : [
+    "AzureML Data Scientist on workspace ${var.workspace_name}",
+    "AcrPull on the workspace's container registry",
+  ]
 }
 
 output "team_group_id" {

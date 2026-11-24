@@ -12,7 +12,9 @@ repo never runs `terraform apply` itself.
 
 Jargon in one line each:
 - **Terraform module**: a reusable recipe of Azure resources; you call it with a few inputs.
-- **Azure ML workspace**: the place in Azure where ML experiments, models and compute live.
+- **Azure ML workspace**: the place in Azure where ML experiments and models live.
+- **Compute cluster**: cloud machines that run the jobs; it starts machines when a
+  job arrives and switches them off (scales to 0) when idle.
 - **Workload identity + federated credential**: a "robot account" that GitHub
   Actions can log in as via OIDC, with no stored password.
 - **Entra ID group**: a group of people (formerly Azure AD) that gets permissions together.
@@ -36,11 +38,12 @@ Jargon in one line each:
 ```
 modules/ml-workspace/   ONCE per department, in an EXISTING resource group:
                         Azure ML workspace + storage, key vault, Application
-                        Insights, container registry, shared `cpu-cluster`
-                        scaling to 0, optional `gpu-cluster`
-modules/ml-project/     ONCE per use case: identity for GitHub Actions (OIDC),
-                        AzureML Data Scientist role on the workspace, optional
-                        Entra ID team group, data domains (placeholders).
+                        Insights, container registry. No compute.
+modules/ml-project/     ONCE per use case: identity for GitHub Actions (OIDC)
+                        and jobs, the project's OWN cluster (CPU or GPU, scales
+                        to 0, tagged per project, runs as that identity),
+                        AzureML Data Scientist + AcrPull roles, optional Entra
+                        ID team group, data domains (placeholders).
                         Outputs: the IDs for the project's GitHub variables
 modules/*/examples/basic/   how to call each module
 modules/*/tests/            terraform test with a fake (mock) Azure
@@ -68,7 +71,7 @@ YAML files, and the platform repo's Terraform calls the modules once per file
 
 **Fitting the platform's rules.** Every name has a default (`mlw-<department>`,
 `id-ml-<department>-<use case>`, ...). If the platform has naming rules, pass
-the names in with `names = { ... }` (and `cpu_cluster_name` / `compute_name`);
+the names in with `names = { ... }` (for `ml-project` also `cluster`);
 anything left out keeps its default. `environment` is optional and off by
 default: one workspace per department is the recommended setup, because the
 approval gate already separates tested from untested models.
@@ -93,7 +96,11 @@ terraform -chdir=modules/ml-workspace test     # mock provider: nothing is creat
 - **Federated credentials trust only `repo:<github_repo>`** (its `main` branch
   and its approval environment), never a whole organization.
 - **Pin provider versions** (`azurerm ~> 4.81`, `azuread ~> 3.10`); the same in both modules and examples.
-- **Clusters scale to 0** (`min_node_count = 0`); never add compute instances.
+- **One cluster per use case, in `ml-project`**, running as the project's identity
+  and tagged with `use_case` (data access and costs per project). Clusters scale
+  to 0 (`min_node_count = 0`); never add compute instances.
+- **No role-assignment right** (e.g. a personal sandbox): `create_role_assignments
+  = false`; the `roles_to_assign_by_hand` output lists what someone else must do.
 - **Modules never create resource groups**: they receive one as input.
 - **Defaults never change silently**: without `environment` and `names`, names stay
   exactly as they are (a rename means Azure deletes and recreates the resource).

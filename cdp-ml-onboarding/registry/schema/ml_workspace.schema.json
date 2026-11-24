@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "ml_workspace.schema.json",
   "title": "ML workspace of a department",
-  "description": "Turns on ML for one department: one Azure ML workspace, shared by all its ML use cases. File name: registry/ml_workspaces/<department>.yaml. The platform's Terraform reads it and calls the ml-workspace module.",
+  "description": "Turns on ML for one department: one Azure ML workspace, shared by all its ML use cases (compute comes per use case). File name: registry/ml_workspaces/<department>.yaml. The platform's Terraform reads it and calls the ml-workspace module.",
   "type": "object",
   "additionalProperties": false,
   "required": ["schema_version", "department", "resource_group", "owner"],
@@ -26,18 +26,6 @@
       "description": "Who is responsible for the workspace (usually the platform team).",
       "type": "string",
       "minLength": 3
-    },
-    "gpu": {
-      "description": "true = also create a GPU cluster. Needs GPU quota from Microsoft first.",
-      "type": "boolean",
-      "default": false
-    },
-    "cpu_max_nodes": {
-      "description": "Most CPU machines that may run at once (the cluster always scales back to 0).",
-      "type": "integer",
-      "minimum": 1,
-      "maximum": 10,
-      "default": 2
     }
   }
 }

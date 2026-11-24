@@ -23,7 +23,8 @@ Look for `registry/ml_workspaces/<department>.yaml`.
 - **It exists:** go to step 2.
 - **It does not:** add it in the same pull request (copy
   `registry/ml_workspaces/manufacturing.yaml`). This creates the department's
-  Azure ML workspace and `cpu-cluster` (about 5-10 EUR per month while it exists).
+  Azure ML workspace (about 5-10 EUR per month while it exists). It has no
+  compute of its own: every use case gets its own cluster.
 
 ## 2. Add the use case file
 
@@ -75,9 +76,13 @@ The `github_variables` output gives five values for the project repo
 `AZURE_CLIENT_ID`, `AZURE_TENANT_ID`, `AZURE_SUBSCRIPTION_ID`,
 `AZURE_RESOURCE_GROUP`, `AZURE_ML_WORKSPACE`.
 
+The `project_clusters` output gives the project's own cluster: its name goes
+into `compute:` in the project's `jobs/*.yml`, its machine type into
+`config.yml` (`cost.vm_size`, for the cost estimate).
+
 Also tell them to create the `production` environment with the reviewers.
 
 ## Retiring a use case
 
 Set `status: retired` in its file (keep the file for the record). The next apply
-removes its identity and access. The models and runs stay in the workspace.
+removes its identity, its cluster and its access. The models and runs stay in the workspace.

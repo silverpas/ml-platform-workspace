@@ -33,7 +33,6 @@ locals {
     [for key, ws in local.workspaces : "ml_workspaces/${key}.yaml: department must be \"${key}\" (the file name)" if ws.department != key],
     [for key, uc in local.all_use_cases : "ml_use_cases/${key}.yaml: file name must be ${uc.department}__${uc.use_case_id}.yaml" if key != "${uc.department}__${uc.use_case_id}"],
     [for key, uc in local.active_use_cases : "ml_use_cases/${key}.yaml: no ml_workspaces/${uc.department}.yaml (turn on ML for the department first)" if !contains(keys(local.workspaces), uc.department)],
-    [for key, uc in local.active_use_cases : "ml_use_cases/${key}.yaml: gpu: true, but ml_workspaces/${uc.department}.yaml has no GPU cluster" if lookup(uc, "gpu", false) && !lookup(lookup(local.workspaces, uc.department, {}), "gpu", false)],
   )
 
   # Only use cases whose department has a workspace are planned; the others are
@@ -53,8 +52,6 @@ module "ml_workspace" {
   department          = each.value.department
   resource_group_name = each.value.resource_group
   owner               = each.value.owner
-  gpu                 = lookup(each.value, "gpu", false)
-  cpu_max_nodes       = lookup(each.value, "cpu_max_nodes", 2)
 }
 
 # Once per active ML use case.
@@ -66,8 +63,8 @@ module "ml_project" {
   name                          = each.value.use_case_id
   owner                         = each.value.owner
   github_repo                   = each.value.github_repo
-  gpu                           = lookup(each.value, "gpu", false)
-  compute_name                  = lookup(each.value, "gpu", false) ? module.ml_workspace[each.value.department].gpu_cluster_name : module.ml_workspace[each.value.department].cpu_cluster_name
+  gpu                           = lookup(each.value, "gpu", false) # the project's own cluster: CPU or GPU
+  container_registry_id         = module.ml_workspace[each.value.department].container_registry_id
   workspace_name                = module.ml_workspace[each.value.department].workspace_name
   workspace_resource_group_name = module.ml_workspace[each.value.department].resource_group_name
 

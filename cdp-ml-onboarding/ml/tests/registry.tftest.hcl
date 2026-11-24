@@ -85,13 +85,3 @@ run "file_name_must_match_the_content" {
 
   expect_failures = [output.registry_checks]
 }
-
-run "gpu_use_case_needs_a_gpu_workspace" {
-  command = plan
-
-  variables {
-    registry_dir = "tests/fixtures/gpu_without_cluster"
-  }
-
-  expect_failures = [output.registry_checks]
-}

@@ -59,11 +59,13 @@ predictions_table: ml_tool_wear_predictions
 - [ ] **Hand-over:** give the project team the `github_variables` output (five
       IDs, stored as GitHub *variables*, not secrets):
       `AZURE_CLIENT_ID`, `AZURE_TENANT_ID`, `AZURE_SUBSCRIPTION_ID`,
-      `AZURE_RESOURCE_GROUP`, `AZURE_ML_WORKSPACE`.
+      `AZURE_RESOURCE_GROUP`, `AZURE_ML_WORKSPACE`; and the `project_clusters`
+      output (the project's own cluster name and machine type).
 - [ ] **Approval gate:** in the project repo, *Settings → Environments* →
       `production`, with the reviewer from qualification as required reviewer.
 - [ ] **Project settings:** in the project repo's `config.yml`, `model.name` =
       `use_case_id` and `scoring.predictions_table` = the registry's
-      `predictions_table`. In `model-card.md`: owner, risk tier, first review date.
+      `predictions_table`, `cost.vm_size` = the cluster's machine type; in
+      `jobs/*.yml`, `compute: azureml:<cluster name>`. In `model-card.md`: owner, risk tier, first review date.
 - [ ] **Close:** comment with links to the project repo and the registry pull
       request, set the label `set-up`, close this issue.

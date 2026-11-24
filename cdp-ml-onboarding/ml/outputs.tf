@@ -23,6 +23,13 @@ output "github_variables" {
   }
 }
 
+output "project_clusters" {
+  description = "Per use case: its own cluster. The name goes into the project's jobs/*.yml (compute), the machine type into config.yml (cost)."
+  value = {
+    for key, project in module.ml_project : local.use_cases[key].github_repo => project.cluster
+  }
+}
+
 output "data_access_todo" {
   description = "Per use case: what the data owners still grant in Fabric (read access, predictions table)."
   value = {

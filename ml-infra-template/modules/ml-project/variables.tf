@@ -34,12 +34,18 @@ variable "environment" {
 }
 
 variable "names" {
-  description = "Optional: your own names, when the platform has naming rules. Left out = the module's default (id-ml-<department>-<name>, grp-ml-<department>-<name>)."
+  description = "Optional: your own names, when the platform has naming rules. Left out = the module's default (id-ml-<department>-<name>, grp-ml-<department>-<name>, cpu-<name> or gpu-<name>)."
   type = object({
     identity   = optional(string)
     team_group = optional(string)
+    cluster    = optional(string)
   })
   default = {}
+
+  validation {
+    condition     = var.names.cluster == null ? true : can(regex("^[a-zA-Z][a-zA-Z0-9-]{1,15}$", var.names.cluster))
+    error_message = "names.cluster: 2-16 characters, letters, digits and hyphens, starting with a letter (Azure ML's rule)."
+  }
 }
 
 variable "owner" {
@@ -74,18 +80,46 @@ variable "workspace_resource_group_name" {
   type        = string
 }
 
-# --- Compute (the clusters are created by the ml-workspace module) ---
+variable "container_registry_id" {
+  description = "Full ID of the workspace's container registry (ml-workspace output container_registry_id). The project's cluster gets AcrPull on it, to load the job environments. Required when create_role_assignments = true."
+  type        = string
+  default     = null
+}
+
+# --- Compute: the project's own cluster ---
 
 variable "gpu" {
-  description = "true = this project trains on the department's GPU cluster (ml-workspace with gpu = true). Changes only the compute_name output."
+  description = "true = a GPU cluster instead of a CPU one. Needs GPU quota from Microsoft first."
   type        = bool
   default     = false
 }
 
-variable "compute_name" {
-  description = "Optional: the cluster the project's jobs use, e.g. ml-workspace's cpu_cluster_name output. null = \"gpu-cluster\" or \"cpu-cluster\", depending on gpu."
+variable "vm_size" {
+  description = "Machine type of the cluster. null = Standard_DS3_v2 (4 cores, 14 GB) for CPU, Standard_NC4as_T4_v3 (1 small T4 GPU) for GPU. Must fit the subscription's quota."
   type        = string
   default     = null
+}
+
+variable "max_nodes" {
+  description = "Most machines that may run at once. The cluster always scales back to 0 when idle."
+  type        = number
+  default     = 1
+
+  validation {
+    condition     = var.max_nodes >= 1 && var.max_nodes <= 10
+    error_message = "max_nodes must be between 1 and 10."
+  }
+}
+
+variable "idle_minutes_before_scale_down" {
+  description = "Minutes a machine may sit idle before it is switched off (also used in the project's cost estimate)."
+  type        = number
+  default     = 15
+
+  validation {
+    condition     = var.idle_minutes_before_scale_down >= 1 && var.idle_minutes_before_scale_down <= 120
+    error_message = "idle_minutes_before_scale_down must be between 1 and 120."
+  }
 }
 
 # --- Data (placeholders until the Fabric side is clear) ---
@@ -94,6 +128,14 @@ variable "data_domains" {
   description = "Fabric data domains this project reads, e.g. [\"production\"]. Recorded as a tag and in the fabric_access_todo output; access is granted in Fabric by hand."
   type        = list(string)
   default     = []
+}
+
+# --- Permissions ---
+
+variable "create_role_assignments" {
+  description = "true (default) = give the identity its roles (AzureML Data Scientist on the workspace, AcrPull on the registry). Needs Owner, User Access Administrator or Role Based Access Control Administrator. false = someone with that right assigns them by hand (e.g. a personal sandbox)."
+  type        = bool
+  default     = true
 }
 
 # --- Team (optional: needs permission to create Entra ID groups) ---

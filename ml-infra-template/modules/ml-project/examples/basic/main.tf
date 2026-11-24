@@ -35,6 +35,7 @@ module "ml_tool_wear" {
   # The department workspace, created once with the ml-workspace module.
   workspace_name                = "[department workspace]"
   workspace_resource_group_name = "[department resource group]"
+  container_registry_id         = "[workspace container registry ID]" # ml-workspace output
 }
 
 output "github_variables" {
@@ -46,4 +47,9 @@ output "github_variables" {
     AZURE_ML_WORKSPACE    = module.ml_tool_wear.workspace_name
     AZURE_RESOURCE_GROUP  = module.ml_tool_wear.resource_group_name
   }
+}
+
+output "cluster" {
+  description = "The project's cluster: its name goes into jobs/*.yml, its machine type into config.yml (cost)."
+  value       = module.ml_tool_wear.cluster
 }

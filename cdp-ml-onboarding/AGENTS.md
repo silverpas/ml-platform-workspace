@@ -42,7 +42,7 @@ registry/
   schema/ml_use_case.schema.json
 ml/                     Terraform: reads the registry, calls the modules
   main.tf               one module per file (for_each), cross-file checks
-  outputs.tf            registry_checks, github_variables, data_access_todo
+  outputs.tf            registry_checks, github_variables, project_clusters, data_access_todo
   variables.tf          registry_dir (only tests change it)
   versions.tf           pinned providers (azurerm ~> 4.81, azuread ~> 3.10)
   tests/                terraform test with a fake Azure; tests/fixtures/ = small
@@ -57,7 +57,9 @@ In this example only, module `source` points to `../../ml-infra-template/modules
 so it validates locally. In the real repo it points to wherever the platform
 team keeps the modules. The modules use default names (`mlw-<department>`, ...);
 if the platform defines names centrally, `ml/main.tf` passes them in with
-`names = { ... }`. The cluster name goes from `ml_workspace` to `ml_project`.
+`names = { ... }`. Each use case gets its **own cluster** (CPU, or GPU with
+`gpu: true`) from `ml_project`; the workspace's registry ID goes from
+`ml_workspace` to `ml_project`, so the cluster may load the job environments.
 
 ## Workflow: onboard a new ML use case
 

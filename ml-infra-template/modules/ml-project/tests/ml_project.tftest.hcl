@@ -25,14 +25,48 @@ variables {
   github_repo                   = "example-org/ml-tool-wear"
   workspace_name                = "mlw-manufacturing"
   workspace_resource_group_name = "rg-ml-manufacturing"
+  container_registry_id         = "/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/rg-ml-manufacturing/providers/Microsoft.ContainerRegistry/registries/crmlmanufactur123456"
 }
 
-run "uses_the_shared_cpu_cluster_by_default" {
+run "own_cpu_cluster_scales_to_zero" {
   command = plan
 
   assert {
-    condition     = output.compute_name == "cpu-cluster"
-    error_message = "Without gpu = true the project should use the shared CPU cluster."
+    condition     = azurerm_machine_learning_compute_cluster.project.name == "cpu-tool-wear" && output.compute_name == "cpu-tool-wear"
+    error_message = "The project's cluster should be called cpu-<name> by default."
+  }
+
+  assert {
+    condition     = azurerm_machine_learning_compute_cluster.project.vm_size == "Standard_DS3_v2"
+    error_message = "Default CPU machine type should be Standard_DS3_v2."
+  }
+
+  assert {
+    condition = alltrue([
+      azurerm_machine_learning_compute_cluster.project.scale_settings[0].min_node_count == 0,
+      azurerm_machine_learning_compute_cluster.project.scale_settings[0].max_node_count == 1,
+      azurerm_machine_learning_compute_cluster.project.scale_settings[0].scale_down_nodes_after_idle_duration == "PT15M",
+    ])
+    error_message = "The cluster must scale to 0, at most 1 machine by default, idle machines off after 15 minutes."
+  }
+}
+
+run "cluster_runs_as_the_project_identity_with_its_tags" {
+  command = plan
+
+  assert {
+    condition     = azurerm_machine_learning_compute_cluster.project.identity[0].type == "UserAssigned"
+    error_message = "The cluster must run as the project's own identity (data access per project)."
+  }
+
+  assert {
+    condition     = azurerm_machine_learning_compute_cluster.project.tags["use_case"] == "tool-wear"
+    error_message = "The cluster must carry the use_case tag (costs per project)."
+  }
+
+  assert {
+    condition     = azurerm_role_assignment.registry[0].role_definition_name == "AcrPull"
+    error_message = "The identity needs AcrPull on the registry to load the job environments."
   }
 }
 
@@ -44,8 +78,41 @@ run "gpu_on_request" {
   }
 
   assert {
-    condition     = output.compute_name == "gpu-cluster"
-    error_message = "With gpu = true the project should use the shared GPU cluster."
+    condition     = azurerm_machine_learning_compute_cluster.project.name == "gpu-tool-wear" && azurerm_machine_learning_compute_cluster.project.vm_size == "Standard_NC4as_T4_v3"
+    error_message = "With gpu = true the project should get its own GPU cluster."
+  }
+}
+
+run "long_cluster_names_are_shortened" {
+  command = plan
+
+  variables {
+    name        = "spindle-vibration-alerts"
+    environment = "prod"
+  }
+
+  assert {
+    condition     = length(azurerm_machine_learning_compute_cluster.project.name) <= 16 && startswith(azurerm_machine_learning_compute_cluster.project.name, "cpu-spind-")
+    error_message = "Cluster names must fit Azure ML's 16-character limit."
+  }
+}
+
+run "sandbox_without_role_assignments" {
+  command = plan
+
+  variables {
+    create_role_assignments = false
+    container_registry_id   = null
+  }
+
+  assert {
+    condition     = length(azurerm_role_assignment.workspace) == 0 && length(azurerm_role_assignment.registry) == 0
+    error_message = "With create_role_assignments = false no roles may be assigned."
+  }
+
+  assert {
+    condition     = length(output.roles_to_assign_by_hand) == 2
+    error_message = "The roles to assign by hand should be listed."
   }
 }
 
@@ -67,12 +134,12 @@ run "least_privilege_role_on_the_workspace" {
   command = plan
 
   assert {
-    condition     = azurerm_role_assignment.workspace.role_definition_name == "AzureML Data Scientist"
+    condition     = azurerm_role_assignment.workspace[0].role_definition_name == "AzureML Data Scientist"
     error_message = "The project identity should get the AzureML Data Scientist role, nothing broader."
   }
 
   assert {
-    condition     = endswith(azurerm_role_assignment.workspace.scope, "/workspaces/mlw-manufacturing")
+    condition     = endswith(azurerm_role_assignment.workspace[0].scope, "/workspaces/mlw-manufacturing")
     error_message = "The role must be limited to the department workspace."
   }
 }
@@ -197,8 +264,8 @@ run "names_from_outside_win" {
   variables {
     names = {
       identity = "uai-mfg-toolwear-01"
+      cluster  = "cpu-mfg-01"
     }
-    compute_name = "cpu-mfg-01"
   }
 
   assert {
@@ -208,6 +275,18 @@ run "names_from_outside_win" {
 
   assert {
     condition     = output.compute_name == "cpu-mfg-01"
-    error_message = "A compute_name given from outside must be passed on to the project."
+    error_message = "A cluster name given in var.names must be used as it is."
   }
+}
+
+run "rejects_too_long_cluster_name" {
+  command = plan
+
+  variables {
+    names = {
+      cluster = "cluster-name-way-too-long"
+    }
+  }
+
+  expect_failures = [var.names]
 }

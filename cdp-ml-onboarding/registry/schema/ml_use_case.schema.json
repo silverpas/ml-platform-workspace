@@ -57,7 +57,7 @@
       "enum": ["exploration", "decision_support", "production_critical"]
     },
     "gpu": {
-      "description": "true = train on the department's GPU cluster (the department's workspace file must have gpu: true).",
+      "description": "true = the use case's own cluster has a GPU instead of CPU only. Needs GPU quota from Microsoft first.",
       "type": "boolean",
       "default": false
     },
