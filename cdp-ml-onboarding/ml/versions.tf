@@ -27,10 +27,17 @@ terraform {
 # Login and subscription come from the environment (ARM_* variables set by the
 # workflow via OIDC, or `az login` locally), never from this file.
 provider "azurerm" {
-  features {}
+  subscription_id                 = var.subscription_id # null = from ARM_SUBSCRIPTION_ID (set by the workflow)
+  resource_provider_registrations = var.resource_provider_registrations
+
+  features {
+    key_vault {
+      purge_soft_delete_on_destroy = var.purge_key_vault_on_destroy
+    }
+  }
 }
 
-provider "azuread" {}
+# azuread needs no settings: it uses the same login as azurerm.
 
 # GitHub login comes from the environment (GITHUB_TOKEN, or a GitHub App in
 # the platform's workflow), never from this file.

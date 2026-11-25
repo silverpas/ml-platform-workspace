@@ -43,7 +43,8 @@ registry/
 ml/                     Terraform: reads the registry, calls the modules
   main.tf               one module per file (for_each), cross-file checks
   outputs.tf            registry_checks, project_repos, github_variables, project_clusters, data_access_todo
-  variables.tf          registry_dir (tests), manage_github, github_owner, template_repo
+  variables.tf          registry_dir (tests), manage_github, github_owner, template_repo;
+                        for a sandbox: create_role_assignments, extra_tags, provider settings
   versions.tf           pinned providers (azurerm ~> 4.81, azuread ~> 3.10, github ~> 6.13)
   tests/                terraform test with a fake Azure and GitHub; tests/fixtures/ = small
                         test registries (good and broken)

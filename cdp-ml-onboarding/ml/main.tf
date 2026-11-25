@@ -53,6 +53,7 @@ module "ml_workspace" {
   department          = each.value.department
   resource_group_name = each.value.resource_group
   owner               = each.value.owner
+  tags                = var.extra_tags
 }
 
 # Once per active ML use case.
@@ -77,10 +78,12 @@ module "ml_project" {
   # "manufacturing.gold.fact_machine_sensors" -> data domain "manufacturing"
   data_domains = distinct([for table in each.value.reads : split(".", table)[0]])
 
-  tags = {
+  create_role_assignments = var.create_role_assignments
+
+  tags = merge(var.extra_tags, {
     risk_tier         = each.value.risk_tier
     predictions_table = each.value.predictions_table
-  }
+  })
 
   # A department's first use case is often added together with its workspace:
   # wait until the workspace exists before looking it up.
