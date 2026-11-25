@@ -68,6 +68,15 @@ variable "github_repo" {
   }
 }
 
+variable "github_ids" {
+  description = "Optional: the numeric IDs of the repo's owner and of the repo. GitHub may put them in the OIDC subject (repo:<owner>@<owner_id>/<repo>@<repo_id>:...); the login error message shows which form it uses. Find them with: gh api repos/<org>/<repo> --jq '.owner.id, .id'. null (default) = subject without IDs."
+  type = object({
+    owner_id = number
+    repo_id  = number
+  })
+  default = null
+}
+
 # --- Where it plugs in (created by the platform team, not by this module) ---
 
 variable "workspace_name" {

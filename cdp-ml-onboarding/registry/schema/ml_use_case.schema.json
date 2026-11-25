@@ -52,6 +52,16 @@
       "type": "string",
       "pattern": "^[A-Za-z0-9-]+/[A-Za-z0-9._-]+$"
     },
+    "github_ids": {
+      "description": "Optional: numeric IDs of the repo owner and the repo, only when GitHub puts them in the OIDC subject (repo:org@<owner_id>/repo@<repo_id>). Find them with: gh api repos/<org>/<repo> --jq '.owner.id, .id'.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["owner_id", "repo_id"],
+      "properties": {
+        "owner_id": { "type": "integer", "minimum": 1 },
+        "repo_id": { "type": "integer", "minimum": 1 }
+      }
+    },
     "risk_tier": {
       "description": "Set at qualification (step 2): how strict the approval gate is.",
       "enum": ["exploration", "decision_support", "production_critical"]

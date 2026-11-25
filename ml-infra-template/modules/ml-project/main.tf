@@ -43,6 +43,14 @@ locals {
   # GitHub's login service, and the audience Azure expects for it.
   github_issuer   = "https://token.actions.githubusercontent.com"
   github_audience = ["api://AzureADTokenExchange"]
+
+  # How the repo appears in GitHub's OIDC subject: "org/repo", or with numeric
+  # IDs "org@123/repo@456" when GitHub includes them (see var.github_ids).
+  github_subject_repo = var.github_ids == null ? var.github_repo : format(
+    "%s@%d/%s@%d",
+    split("/", var.github_repo)[0], var.github_ids.owner_id,
+    split("/", var.github_repo)[1], var.github_ids.repo_id,
+  )
 }
 
 # 1. The project's identity.
@@ -60,7 +68,7 @@ resource "azurerm_federated_identity_credential" "github_main" {
   user_assigned_identity_id = azurerm_user_assigned_identity.project.id
   issuer                    = local.github_issuer
   audience                  = local.github_audience
-  subject                   = "repo:${var.github_repo}:ref:refs/heads/main"
+  subject                   = "repo:${local.github_subject_repo}:ref:refs/heads/main"
 }
 
 # 2b. ...and when a workflow runs in the approval-gated environment
@@ -70,7 +78,7 @@ resource "azurerm_federated_identity_credential" "github_deploy" {
   user_assigned_identity_id = azurerm_user_assigned_identity.project.id
   issuer                    = local.github_issuer
   audience                  = local.github_audience
-  subject                   = "repo:${var.github_repo}:environment:${var.deploy_environment}"
+  subject                   = "repo:${local.github_subject_repo}:environment:${var.deploy_environment}"
 }
 
 # 3. Permission to submit jobs and register models in the workspace.

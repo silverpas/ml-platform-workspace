@@ -80,6 +80,12 @@ The `project_clusters` output gives the project's own cluster: its name goes
 into `compute:` in the project's `jobs/*.yml`, its machine type into
 `config.yml` (`cost.vm_size`, for the cost estimate).
 
+If the project's first GitHub workflow fails to log in with *"No matching
+federated identity record"*, GitHub sends the repo with numeric IDs. Add them
+to the use case file and apply again:
+`github_ids: { owner_id: <n>, repo_id: <n> }`
+(`gh api repos/<org>/<repo> --jq '.owner.id, .id'`).
+
 Also tell them to create the `production` environment with the reviewers.
 
 ## Retiring a use case

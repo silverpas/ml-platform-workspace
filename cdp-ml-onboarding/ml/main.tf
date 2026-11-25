@@ -63,7 +63,8 @@ module "ml_project" {
   name                          = each.value.use_case_id
   owner                         = each.value.owner
   github_repo                   = each.value.github_repo
-  gpu                           = lookup(each.value, "gpu", false) # the project's own cluster: CPU or GPU
+  github_ids                    = lookup(each.value, "github_ids", null) # only if GitHub's OIDC subject has IDs
+  gpu                           = lookup(each.value, "gpu", false)       # the project's own cluster: CPU or GPU
   container_registry_id         = module.ml_workspace[each.value.department].container_registry_id
   workspace_name                = module.ml_workspace[each.value.department].workspace_name
   workspace_resource_group_name = module.ml_workspace[each.value.department].resource_group_name

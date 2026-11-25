@@ -94,7 +94,8 @@ terraform -chdir=modules/ml-workspace test     # mock provider: nothing is creat
 - **No secrets**, no real subscription, tenant or resource IDs, no client names.
 - **Least privilege**: never give use-case identities or groups Owner or Contributor.
 - **Federated credentials trust only `repo:<github_repo>`** (its `main` branch
-  and its approval environment), never a whole organization.
+  and its approval environment), never a whole organization. If GitHub's login
+  error shows a subject with numeric IDs (`org@123/repo@456`), set `github_ids`.
 - **Pin provider versions** (`azurerm ~> 4.81`, `azuread ~> 3.10`); the same in both modules and examples.
 - **One cluster per use case, in `ml-project`**, running as the project's identity
   and tagged with `use_case` (data access and costs per project). Clusters scale

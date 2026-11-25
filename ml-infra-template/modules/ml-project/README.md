@@ -38,6 +38,7 @@ replaces the default names; anything left out keeps its default. The optional
 | `name` | yes | `tool-wear` (3-24 characters; same as the model and repo) |
 | `owner` | yes | `maintenance-analytics-team` |
 | `github_repo` | yes | `example-org/ml-tool-wear` |
+| `github_ids` | no (none) | `{ owner_id = 123, repo_id = 456 }`: only if GitHub's OIDC subject contains IDs (see below) |
 | `workspace_name` | yes | the department workspace |
 | `workspace_resource_group_name` | yes | its resource group |
 | `container_registry_id` | yes, unless `create_role_assignments = false` | ml-workspace output `container_registry_id` |
@@ -68,6 +69,16 @@ resource group. Contributor is not enough: with only Contributor, set
    - **Viewer** on the workspace that holds the input data;
    - **Contributor** on the workspace with the Gold lakehouse, where the
      predictions table (`ml_<use case>_predictions`) is written.
+
+## If GitHub's login fails with "No matching federated identity record"
+
+GitHub's OIDC subject can contain numeric IDs, e.g.
+`repo:example-org@123/ml-tool-wear@456:ref:refs/heads/main`. The error message
+shows the subject GitHub sent. If it has `@<number>` parts, set `github_ids`:
+
+```bash
+gh api repos/<org>/<repo> --jq '.owner.id, .id'   # owner_id, repo_id
+```
 
 ## Test it locally (no Azure needed)
 

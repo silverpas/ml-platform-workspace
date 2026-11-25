@@ -25,7 +25,9 @@ Every form field marked "→ registry" goes into
 | Does the model need a GPU? | `gpu` | `false` |
 | (set by you, step 2 below) | `github_repo` | `example-org/ml-tool-wear` |
 
-Also set `schema_version: "1.0.0"` and `status: active`.
+Also set `schema_version: "1.0.0"` and `status: active`. Only if GitHub's
+login later fails with "No matching federated identity record": add
+`github_ids` (see the platform repo's onboarding checklist).
 
 The result looks like this:
 

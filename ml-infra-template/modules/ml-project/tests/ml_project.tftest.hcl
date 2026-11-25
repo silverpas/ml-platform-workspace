@@ -130,6 +130,27 @@ run "github_can_only_log_in_from_this_repo" {
   }
 }
 
+run "github_subject_with_numeric_ids" {
+  command = plan
+
+  variables {
+    github_ids = {
+      owner_id = 123
+      repo_id  = 456
+    }
+  }
+
+  assert {
+    condition     = azurerm_federated_identity_credential.github_main.subject == "repo:example-org@123/ml-tool-wear@456:ref:refs/heads/main"
+    error_message = "With github_ids the subject must contain the numeric IDs, as GitHub sends them."
+  }
+
+  assert {
+    condition     = azurerm_federated_identity_credential.github_deploy.subject == "repo:example-org@123/ml-tool-wear@456:environment:production"
+    error_message = "The deploy subject must also contain the numeric IDs."
+  }
+}
+
 run "least_privilege_role_on_the_workspace" {
   command = plan
 
