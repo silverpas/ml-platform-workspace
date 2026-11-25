@@ -120,12 +120,12 @@ run "github_can_only_log_in_from_this_repo" {
   command = plan
 
   assert {
-    condition     = azurerm_federated_identity_credential.github_main.subject == "repo:example-org/ml-tool-wear:ref:refs/heads/main"
+    condition     = azurerm_federated_identity_credential.github_main[0].subject == "repo:example-org/ml-tool-wear:ref:refs/heads/main"
     error_message = "Training login must be limited to the main branch of this repo."
   }
 
   assert {
-    condition     = azurerm_federated_identity_credential.github_deploy.subject == "repo:example-org/ml-tool-wear:environment:production"
+    condition     = azurerm_federated_identity_credential.github_deploy[0].subject == "repo:example-org/ml-tool-wear:environment:production"
     error_message = "Deploy login must be limited to the approval-gated environment of this repo."
   }
 }
@@ -141,12 +141,12 @@ run "github_subject_with_numeric_ids" {
   }
 
   assert {
-    condition     = azurerm_federated_identity_credential.github_main.subject == "repo:example-org@123/ml-tool-wear@456:ref:refs/heads/main"
+    condition     = azurerm_federated_identity_credential.github_main[0].subject == "repo:example-org@123/ml-tool-wear@456:ref:refs/heads/main"
     error_message = "With github_ids the subject must contain the numeric IDs, as GitHub sends them."
   }
 
   assert {
-    condition     = azurerm_federated_identity_credential.github_deploy.subject == "repo:example-org@123/ml-tool-wear@456:environment:production"
+    condition     = azurerm_federated_identity_credential.github_deploy[0].subject == "repo:example-org@123/ml-tool-wear@456:environment:production"
     error_message = "The deploy subject must also contain the numeric IDs."
   }
 }
@@ -310,4 +310,17 @@ run "rejects_too_long_cluster_name" {
   }
 
   expect_failures = [var.names]
+}
+
+run "no_github_login_rules_when_ml_project_github_makes_them" {
+  command = plan
+
+  variables {
+    create_github_login = false
+  }
+
+  assert {
+    condition     = length(azurerm_federated_identity_credential.github_main) == 0 && length(azurerm_federated_identity_credential.github_deploy) == 0
+    error_message = "With create_github_login = false the GitHub login rules belong to ml-project-github."
+  }
 }

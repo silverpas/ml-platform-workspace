@@ -66,6 +66,11 @@ output "fabric_access_todo" {
   }
 }
 
+output "identity_id" {
+  description = "Full Azure ID of the project identity. Input identity_id of ml-project-github (it adds the GitHub login rules to it)."
+  value       = azurerm_user_assigned_identity.project.id
+}
+
 output "principal_id" {
   description = "Object ID of the project identity: give this one access to the Fabric workspaces (see README)."
   value       = azurerm_user_assigned_identity.project.principal_id

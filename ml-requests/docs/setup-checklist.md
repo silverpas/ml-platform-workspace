@@ -49,22 +49,20 @@ predictions_table: ml_tool_wear_predictions
 
 ## 2. The checklist
 
-- [ ] **Project repo:** create `ml-<use_case_id>` from the `ml-project-template`
-      repo (*Use this template*). Give the model owner and team access.
+- [ ] **Reviewer:** add the approval-gate reviewer's GitHub ID to the file as
+      `reviewer_github_ids: [<id>]` (`gh api users/<login> --jq .id`).
 - [ ] **Registry file:** open a pull request in the platform repo with the file
       above. If the department has no `registry/ml_workspaces/<department>.yaml`
       yet, add it in the same pull request. Follow the platform repo's
-      onboarding checklist (checks, `terraform plan`, approval, apply).
+      onboarding checklist (checks, `terraform plan`, approval, apply). The
+      apply also creates the project repo `ml-<use_case_id>` from the template,
+      with its Azure variables and approval gate. Give the team access to it.
 - [ ] **Data access:** after apply, the `data_access_todo` output lists what the
       data owners must grant in Fabric (read on `reads`, write on
       `predictions_table`). Ask them, link their answers here.
-- [ ] **Hand-over:** give the project team the `github_variables` output (five
-      IDs, stored as GitHub *variables*, not secrets):
-      `AZURE_CLIENT_ID`, `AZURE_TENANT_ID`, `AZURE_SUBSCRIPTION_ID`,
-      `AZURE_RESOURCE_GROUP`, `AZURE_ML_WORKSPACE`; and the `project_clusters`
-      output (the project's own cluster name and machine type).
-- [ ] **Approval gate:** in the project repo, *Settings → Environments* →
-      `production`, with the reviewer from qualification as required reviewer.
+- [ ] **Hand-over:** the repo link (`project_repos` output) and the
+      `project_clusters` output (the project's own cluster name and machine
+      type). The five Azure variables and the approval gate are already set.
 - [ ] **Project settings:** in the project repo's `config.yml`, `model.name` =
       `use_case_id` and `scoring.predictions_table` = the registry's
       `predictions_table`, `cost.vm_size` = the cluster's machine type; in

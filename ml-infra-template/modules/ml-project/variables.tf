@@ -68,6 +68,12 @@ variable "github_repo" {
   }
 }
 
+variable "create_github_login" {
+  description = "true (default) = this module creates the two GitHub login rules (federated credentials). false = module ml-project-github creates them (it reads the repo's numeric IDs itself)."
+  type        = bool
+  default     = true
+}
+
 variable "github_ids" {
   description = "Optional: the numeric IDs of the repo's owner and of the repo. GitHub may put them in the OIDC subject (repo:<owner>@<owner_id>/<repo>@<repo_id>:...); the login error message shows which form it uses. Find them with: gh api repos/<org>/<repo> --jq '.owner.id, .id'. null (default) = subject without IDs."
   type = object({

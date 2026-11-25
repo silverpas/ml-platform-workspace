@@ -10,8 +10,13 @@ output "registry_checks" {
   }
 }
 
+output "project_repos" {
+  description = "Per use case: its GitHub repo, ready to run (only with manage_github = true)."
+  value       = { for key, gh in module.ml_project_github : key => gh.repo_url }
+}
+
 output "github_variables" {
-  description = "Per use case: the five GitHub variables to set in its repo (Settings -> Secrets and variables -> Actions -> Variables)."
+  description = "Per use case: the five GitHub variables. Set automatically with manage_github = true; otherwise set them by hand (Settings -> Secrets and variables -> Actions -> Variables)."
   value = {
     for key, project in module.ml_project : local.use_cases[key].github_repo => {
       AZURE_CLIENT_ID       = project.azure_client_id

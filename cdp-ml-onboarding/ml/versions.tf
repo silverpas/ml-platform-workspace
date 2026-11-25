@@ -13,6 +13,10 @@ terraform {
       source  = "hashicorp/azuread"
       version = "~> 3.10"
     }
+    github = {
+      source  = "integrations/github"
+      version = "~> 6.13"
+    }
   }
 
   # ASSUMPTION: the real platform repo keeps state in a storage account with
@@ -27,3 +31,9 @@ provider "azurerm" {
 }
 
 provider "azuread" {}
+
+# GitHub login comes from the environment (GITHUB_TOKEN, or a GitHub App in
+# the platform's workflow), never from this file.
+provider "github" {
+  owner = var.github_owner
+}

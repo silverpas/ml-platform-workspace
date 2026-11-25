@@ -29,6 +29,14 @@ mock_provider "azurerm" {
 
 mock_provider "azuread" {}
 
+mock_provider "github" {
+  mock_data "github_rest_api" {
+    defaults = {
+      body = "{\"id\": 123}"
+    }
+  }
+}
+
 run "the_real_example_registry_plans" {
   command = plan
 
@@ -40,6 +48,11 @@ run "the_real_example_registry_plans" {
   assert {
     condition     = keys(module.ml_project) == ["manufacturing__tool-wear"]
     error_message = "registry/ml_use_cases/manufacturing__tool-wear.yaml should give one project."
+  }
+
+  assert {
+    condition     = keys(module.ml_project_github) == ["manufacturing__tool-wear"]
+    error_message = "Each use case should also get its GitHub repo, variables and environment."
   }
 
   assert {
@@ -81,6 +94,29 @@ run "file_name_must_match_the_content" {
 
   variables {
     registry_dir = "tests/fixtures/wrong_file_name"
+  }
+
+  expect_failures = [output.registry_checks]
+}
+
+run "github_by_hand_when_manage_github_is_off" {
+  command = plan
+
+  variables {
+    manage_github = false
+  }
+
+  assert {
+    condition     = length(module.ml_project_github) == 0
+    error_message = "With manage_github = false no GitHub resources may be planned."
+  }
+}
+
+run "repo_of_another_owner_is_refused" {
+  command = plan
+
+  variables {
+    github_owner = "another-org"
   }
 
   expect_failures = [output.registry_checks]

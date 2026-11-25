@@ -71,22 +71,22 @@ The `data_access_todo` output lists what is still needed:
 
 ## 6. Hand over to the project team
 
-The `github_variables` output gives five values for the project repo
-(*Settings → Secrets and variables → Actions → Variables*):
-`AZURE_CLIENT_ID`, `AZURE_TENANT_ID`, `AZURE_SUBSCRIPTION_ID`,
-`AZURE_RESOURCE_GROUP`, `AZURE_ML_WORKSPACE`.
+The apply has also prepared GitHub (`manage_github = true`, the default): the
+project repo from the template (output `project_repos`), its five Azure
+variables, the `production` environment with the reviewers from
+`reviewer_github_ids`, and the GitHub login rules. Give the team the repo link.
+(With `manage_github = false`, set the five `github_variables` and the
+environment by hand.)
 
 The `project_clusters` output gives the project's own cluster: its name goes
 into `compute:` in the project's `jobs/*.yml`, its machine type into
 `config.yml` (`cost.vm_size`, for the cost estimate).
 
-If the project's first GitHub workflow fails to log in with *"No matching
-federated identity record"*, GitHub sends the repo with numeric IDs. Add them
-to the use case file and apply again:
+Only with `manage_github = false`: if the project's first GitHub workflow
+fails to log in with *"No matching federated identity record"*, GitHub sends
+the repo with numeric IDs. Add them to the use case file and apply again:
 `github_ids: { owner_id: <n>, repo_id: <n> }`
 (`gh api repos/<org>/<repo> --jq '.owner.id, .id'`).
-
-Also tell them to create the `production` environment with the reviewers.
 
 ## Retiring a use case
 

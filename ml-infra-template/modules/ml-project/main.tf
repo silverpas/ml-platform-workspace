@@ -62,8 +62,11 @@ resource "azurerm_user_assigned_identity" "project" {
 }
 
 # 2a. GitHub may log in as the identity when a workflow runs on the main branch
-#     (used by train.yml).
+#     (used by train.yml). Skipped when ml-project-github creates these rules
+#     (create_github_login = false): it knows the repo's numeric IDs.
 resource "azurerm_federated_identity_credential" "github_main" {
+  count = var.create_github_login ? 1 : 0
+
   name                      = "github-main"
   user_assigned_identity_id = azurerm_user_assigned_identity.project.id
   issuer                    = local.github_issuer
@@ -74,6 +77,8 @@ resource "azurerm_federated_identity_credential" "github_main" {
 # 2b. ...and when a workflow runs in the approval-gated environment
 #     (used by deploy.yml, only after a reviewer approved).
 resource "azurerm_federated_identity_credential" "github_deploy" {
+  count = var.create_github_login ? 1 : 0
+
   name                      = "github-${var.deploy_environment}"
   user_assigned_identity_id = azurerm_user_assigned_identity.project.id
   issuer                    = local.github_issuer

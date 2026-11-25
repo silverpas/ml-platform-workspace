@@ -62,6 +62,17 @@
         "repo_id": { "type": "integer", "minimum": 1 }
       }
     },
+    "github_create_repo": {
+      "description": "true (default) = the platform creates the repo from the template. false = the repo already exists.",
+      "type": "boolean",
+      "default": true
+    },
+    "reviewer_github_ids": {
+      "description": "GitHub user IDs who approve model versions (the approval gate of deploy.yml). Find one with: gh api users/<login> --jq .id",
+      "type": "array",
+      "items": { "type": "integer", "minimum": 1 },
+      "uniqueItems": true
+    },
     "risk_tier": {
       "description": "Set at qualification (step 2): how strict the approval gate is.",
       "enum": ["exploration", "decision_support", "production_critical"]

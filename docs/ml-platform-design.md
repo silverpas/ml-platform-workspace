@@ -208,6 +208,11 @@ reads:
 predictions_table: ml_tool_wear_predictions   # Gold table, `ml_` prefix
 ```
 
+`ml-project-github`, **once per use case** (next to `ml-project`): the
+project's GitHub repo from the template, its five Azure variables, the
+approval-gated environment and the GitHub login rules. With it, one registry
+YAML file is all a new project needs; nothing is copied by hand.
+
 `ml-project` creates:
 - a compute cluster for this use case (CPU by default, GPU if `gpu: true`),
   scaling to 0, running as the project's identity and tagged with the use case;

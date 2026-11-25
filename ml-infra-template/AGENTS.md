@@ -45,11 +45,15 @@ modules/ml-project/     ONCE per use case: identity for GitHub Actions (OIDC)
                         AzureML Data Scientist + AcrPull roles, optional Entra
                         ID team group, data domains (placeholders).
                         Outputs: the IDs for the project's GitHub variables
+modules/ml-project-github/  ONCE per use case, with ml-project: the project's
+                        GitHub repo (from the template), its five Azure
+                        variables, the `production` environment (approval
+                        gate) and the GitHub login rules (OIDC, numeric IDs)
 modules/*/examples/basic/   how to call each module
-modules/*/tests/            terraform test with a fake (mock) Azure
+modules/*/tests/            terraform test with a fake (mock) Azure and GitHub
 ```
 
-Both modules: `versions.tf` (pinned providers), `variables.tf` (inputs),
+Every module: `versions.tf` (pinned providers), `variables.tf` (inputs),
 `main.tf` (resources), `outputs.tf` (results), `README.md`.
 
 ## Workflow for users (platform engineers)
@@ -61,13 +65,14 @@ YAML files, and the platform repo's Terraform calls the modules once per file
 1. Once per department: `registry/ml_workspaces/<department>.yaml` → one
    `ml-workspace` (needs Contributor on the resource group).
 2. Per approved use case: `registry/ml_use_cases/<department>__<id>.yaml` → one
-   `ml-project` (see also `examples/basic/` for a direct call).
+   `ml-project` (Azure side) and one `ml-project-github` (GitHub side; see
+   `examples/basic/` for direct calls).
 3. Open a pull request, run `terraform plan`, review it, then apply (in the
    platform repo, by the platform team). `ml-project` assigns roles, so it needs
    Owner, User Access Administrator or Role Based Access Control Administrator.
-4. Copy the outputs to the project repo's GitHub variables:
-   `AZURE_CLIENT_ID`, `AZURE_TENANT_ID`, `AZURE_SUBSCRIPTION_ID`,
-   `AZURE_RESOURCE_GROUP`, `AZURE_ML_WORKSPACE`.
+4. Done: `ml-project-github` has created the repo with its five variables
+   (`AZURE_CLIENT_ID`, ...), the `production` environment and the GitHub login
+   rules. Without it, copy the outputs to the repo by hand.
 
 **Fitting the platform's rules.** Every name has a default (`mlw-<department>`,
 `id-ml-<department>-<use case>`, ...). If the platform has naming rules, pass
@@ -96,7 +101,7 @@ terraform -chdir=modules/ml-workspace test     # mock provider: nothing is creat
 - **Federated credentials trust only `repo:<github_repo>`** (its `main` branch
   and its approval environment), never a whole organization. If GitHub's login
   error shows a subject with numeric IDs (`org@123/repo@456`), set `github_ids`.
-- **Pin provider versions** (`azurerm ~> 4.81`, `azuread ~> 3.10`); the same in both modules and examples.
+- **Pin provider versions** (`azurerm ~> 4.81`, `azuread ~> 3.10`, `github ~> 6.13`); the same in all modules and examples.
 - **One cluster per use case, in `ml-project`**, running as the project's identity
   and tagged with `use_case` (data access and costs per project). Clusters scale
   to 0 (`min_node_count = 0`); never add compute instances.

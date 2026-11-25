@@ -10,7 +10,7 @@ become its own GitHub repo. The design is in @docs/ml-platform-design.md
 | Folder | Becomes | Users |
 |---|---|---|
 | `ml-project-template/` | Code template, one repo per ML use case | Data scientists, ML engineers |
-| `ml-infra-template/` | Terraform modules `ml-workspace` (per department), `ml-project` (per use case) | Platform engineers |
+| `ml-infra-template/` | Terraform modules `ml-workspace` (per department), `ml-project` and `ml-project-github` (per use case) | Platform engineers |
 | `cdp-ml-onboarding/` | Example slice of the platform (CDP) repo: what is added per use case | Platform team, platform lead |
 | `ml-requests/` | Request form and process for new ML use cases | Anyone with an idea, platform lead |
 
@@ -70,7 +70,10 @@ become its own GitHub repo. The design is in @docs/ml-platform-design.md
 - **Metadata-driven onboarding**: a new ML use case is one YAML file in the
   platform repo's ML registry (`registry/ml_use_cases/<department>__<id>.yaml`,
   checked against a JSON schema with `jsonschema`). Terraform reads the files and
-  calls the modules; nobody writes module blocks per use case.
+  calls the modules; nobody writes module blocks per use case. The same apply
+  also creates the project's GitHub repo from the template, its five variables,
+  approval environment and login rules (`ml-project-github`, provider
+  `integrations/github`).
 - `demo-local-flow.yml` in the project template is a demo of the approval gate
   without Azure (environment `approval-demo`); it is not the production pipeline.
 
@@ -79,7 +82,7 @@ become its own GitHub repo. The design is in @docs/ml-platform-design.md
 Python 3.11, pandas, scikit-learn, LightGBM, MLflow (2.16: the newest version
 Azure ML supports; MLflow 3 fails there when saving models), pytest, ruff. GitHub
 Actions with OIDC (`azure/login`), deploy behind a GitHub environment with
-required reviewers. Terraform with `azurerm` and `azuread`, versions pinned.
+required reviewers. Terraform with `azurerm`, `azuread` and `github`, versions pinned.
 
 ## Commands
 

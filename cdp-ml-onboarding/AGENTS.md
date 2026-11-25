@@ -42,10 +42,10 @@ registry/
   schema/ml_use_case.schema.json
 ml/                     Terraform: reads the registry, calls the modules
   main.tf               one module per file (for_each), cross-file checks
-  outputs.tf            registry_checks, github_variables, project_clusters, data_access_todo
-  variables.tf          registry_dir (only tests change it)
-  versions.tf           pinned providers (azurerm ~> 4.81, azuread ~> 3.10)
-  tests/                terraform test with a fake Azure; tests/fixtures/ = small
+  outputs.tf            registry_checks, project_repos, github_variables, project_clusters, data_access_todo
+  variables.tf          registry_dir (tests), manage_github, github_owner, template_repo
+  versions.tf           pinned providers (azurerm ~> 4.81, azuread ~> 3.10, github ~> 6.13)
+  tests/                terraform test with a fake Azure and GitHub; tests/fixtures/ = small
                         test registries (good and broken)
 tests/                  pytest: schema and cross-file checks
   invalid/              broken YAML examples the schema must refuse
@@ -60,6 +60,10 @@ if the platform defines names centrally, `ml/main.tf` passes them in with
 `names = { ... }`. Each use case gets its **own cluster** (CPU, or GPU with
 `gpu: true`) from `ml_project`; the workspace's registry ID goes from
 `ml_workspace` to `ml_project`, so the cluster may load the job environments.
+With `manage_github = true` (default) each use case also gets
+`ml_project_github`: its repo from the template, its five Azure variables,
+the `production` environment (reviewers: `reviewer_github_ids`) and the GitHub
+login rules. One YAML file is then all a new project needs.
 
 ## Workflow: onboard a new ML use case
 
@@ -68,11 +72,11 @@ Follow [docs/onboarding-checklist.md](docs/onboarding-checklist.md). In short:
 1. If the department has no `registry/ml_workspaces/<department>.yaml`, add it.
 2. Add `registry/ml_use_cases/<department>__<use_case_id>.yaml`.
 3. Open a pull request: schema checks and `terraform plan` run.
-4. Check the plan: only this use case's identity, two federated credentials and
-   one *AzureML Data Scientist* role; nothing destroyed.
+4. Check the plan: only this use case's identity, cluster, roles, repo, five
+   GitHub variables, environment and two login rules; nothing destroyed.
 5. Review, merge, apply (platform team, after approval, in the real repo).
-6. Grant data access in Fabric (`data_access_todo` output) and hand the
-   `github_variables` output to the project team.
+6. Grant data access in Fabric (`data_access_todo` output) and give the team
+   the repo link (`project_repos` output): it is ready to run.
 
 ## Commands (no Azure account needed)
 
