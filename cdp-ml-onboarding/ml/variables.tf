@@ -10,6 +10,12 @@ variable "default_location" {
   default     = "swedencentral" # ASSUMPTION: replace with the platform's region
 }
 
+variable "existing_resource_groups" {
+  description = "Only for tests: projects (file name without .yaml) that use a resource group which already exists, e.g. { \"manufacturing__tool-wear\" = \"rg-test\" }. Normally empty: every project gets its own new resource group."
+  type        = map(string)
+  default     = {}
+}
+
 variable "manage_github" {
   description = "true (default) = also create each use case's GitHub repo, its five variables and its approval environment (module ml-project-github). false = repos are set up by hand."
   type        = bool

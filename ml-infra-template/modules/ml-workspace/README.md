@@ -2,7 +2,7 @@
 
 Creates **one Azure ML workspace** with everything it needs. The default
 setup is **one workspace per ML project**, in the project's own resource group,
-so projects are fully separated; it can also serve a whole department. The
+so projects are fully separated. The
 platform's registry Terraform calls it once per project (or see
 [examples/basic/main.tf](examples/basic/main.tf) for a direct call). The
 project then plugs in with the [`ml-project`](../ml-project/README.md) module.
@@ -62,7 +62,7 @@ environments; it adds `-<environment>` to the default names and an
 | Name | Required | Example |
 |---|---|---|
 | `department` | yes | `manufacturing` |
-| `resource_group_name` | yes | an existing resource group |
+| `resource_group_name` | yes | the project's resource group (`rg-ml-<department>-<use case>`) |
 | `owner` | yes | `ml-platform-team` |
 | `environment` | no (none) | `dev`, `prod`: only if the platform requires environments |
 | `names` | no (defaults) | your own names, see above |

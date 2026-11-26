@@ -88,32 +88,19 @@ run "one_file_per_use_case_retired_ones_get_nothing" {
   }
 }
 
-run "an_existing_resource_group_is_used_not_created" {
+run "tests_can_use_an_existing_resource_group" {
   command = plan
 
   variables {
-    registry_dir = "tests/fixtures/existing_resource_group"
+    existing_resource_groups = {
+      "manufacturing__tool-wear" = "rg-existing-ml"
+    }
   }
 
   assert {
-    condition     = length(azurerm_resource_group.project) == 0
-    error_message = "A project that names an existing resource group must not create one."
+    condition     = length(azurerm_resource_group.project) == 0 && output.project_resource_groups["manufacturing__tool-wear"] == "rg-existing-ml"
+    error_message = "With existing_resource_groups the project uses that group and creates none."
   }
-
-  assert {
-    condition     = output.project_resource_groups["manufacturing__tool-wear"] == "rg-existing-ml"
-    error_message = "The project must use the resource group named in its file."
-  }
-}
-
-run "two_projects_in_one_resource_group_are_refused" {
-  command = plan
-
-  variables {
-    registry_dir = "tests/fixtures/shared_resource_group"
-  }
-
-  expect_failures = [output.registry_checks]
 }
 
 run "file_name_must_match_the_content" {

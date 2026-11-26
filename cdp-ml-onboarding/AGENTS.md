@@ -43,7 +43,8 @@ ml/                     Terraform: reads the registry, calls the modules
   outputs.tf            registry_checks, project_resource_groups, project_repos,
                         github_variables, project_clusters, data_access_todo
   variables.tf          registry_dir (tests), default_location, manage_github, github_owner, template_repo;
-                        for a sandbox: create_role_assignments, extra_tags, provider settings
+                        for tests/sandboxes: existing_resource_groups, create_role_assignments,
+                        extra_tags, provider settings
   versions.tf           pinned providers (azurerm ~> 4.81, azuread ~> 3.10, github ~> 6.13)
   tests/                terraform test with a fake Azure and GitHub; tests/fixtures/ = small
                         test registries (good and broken)
@@ -55,8 +56,8 @@ requirements.txt        jsonschema, pyyaml, pytest (tests only)
 
 In this example only, module `source` points to `../../ml-infra-template/modules/...`
 so it validates locally. In the real repo it points to wherever the platform
-team keeps the modules. Per project, `ml/main.tf` creates the resource group
-(unless the file names an existing one), then calls `ml_workspace` (the
+team keeps the modules. Per project, `ml/main.tf` creates the project's own
+resource group, then calls `ml_workspace` (the
 project's own workspace; names `mlw-<department>-<use_case>` unless the file
 sets `names`), `ml_project` (identity, own cluster, roles) and, with
 `manage_github = true` (default), `ml_project_github` (repo from the template,
@@ -68,7 +69,7 @@ GitHub login rules). One YAML file is all a new project needs.
 Follow [docs/onboarding-checklist.md](docs/onboarding-checklist.md). In short:
 
 1. Add `registry/ml_use_cases/<department>__<use_case_id>.yaml`.
-2. Optional in the file: `resource_group` (an existing one), `location`, `names`.
+2. Optional in the file: `location` (region), `names` (naming rules).
 3. Open a pull request: schema checks and `terraform plan` run.
 4. Check the plan: only this project's resource group, workspace (with storage,
    key vault, registry, logs), identity, cluster, roles, repo, five GitHub

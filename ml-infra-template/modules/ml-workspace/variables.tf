@@ -1,4 +1,4 @@
-# Inputs: what the platform team fills in, once per ML project (or per department).
+# Inputs: what the platform team fills in, once per ML project.
 
 variable "department" {
   description = "Department that owns the workspace, e.g. \"manufacturing\". Used in names and tags."
@@ -11,7 +11,7 @@ variable "department" {
 }
 
 variable "resource_group_name" {
-  description = "Existing resource group to create everything in. The module does not create it, so it fits however the platform team organizes resource groups."
+  description = "The project's resource group to create everything in (created by the platform's registry Terraform, rg-ml-<department>-<use case>). The module does not create it itself."
   type        = string
 }
 

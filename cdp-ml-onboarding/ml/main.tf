@@ -3,7 +3,7 @@
 # module block per project; they add a YAML file in a pull request.
 #
 #   registry/ml_use_cases/<department>__<use_case>.yaml
-#     -> resource group  rg-ml-<department>-<use_case> (or an existing one)
+#     -> resource group  rg-ml-<department>-<use_case>
 #     -> module.ml_workspace       the project's own Azure ML workspace
 #     -> module.ml_project         its identity, cluster and roles
 #     -> module.ml_project_github  its GitHub repo, variables, approval gate, login
@@ -29,12 +29,12 @@ locals {
     for key, uc in local.all_use_cases : key => uc if lookup(uc, "status", "active") == "active"
   }
 
-  # Per project: its resource group. A name in the file = an existing group;
-  # no name = the platform creates rg-ml-<department>-<use_case>.
+  # Per project: its own resource group, rg-ml-<department>-<use_case>, created
+  # here. (existing_resource_groups is for tests in a group that already exists.)
   resource_groups = {
     for key, uc in local.use_cases : key => {
-      name     = lookup(uc, "resource_group", "rg-ml-${uc.department}-${uc.use_case_id}")
-      existing = contains(keys(uc), "resource_group")
+      name     = lookup(var.existing_resource_groups, key, "rg-ml-${uc.department}-${uc.use_case_id}")
+      existing = contains(keys(var.existing_resource_groups), key)
       location = lookup(uc, "location", var.default_location)
     }
   }
@@ -47,7 +47,7 @@ locals {
   )
 }
 
-# 1. The project's resource group (skipped when the file names an existing one).
+# 1. The project's own resource group.
 resource "azurerm_resource_group" "project" {
   for_each = { for key, rg in local.resource_groups : key => rg if !rg.existing }
 

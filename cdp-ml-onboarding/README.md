@@ -10,8 +10,8 @@ ml/  Terraform reads every file → per project: resource group, Azure ML worksp
      identity, cluster, GitHub repo → plan → approval → apply
 ```
 
-Each project gets **its own resource group** (`rg-ml-<department>-<use_case>`,
-or an existing one) with everything inside: projects are fully separated.
+Each project gets **its own resource group** (`rg-ml-<department>-<use_case>`)
+with everything inside: projects are fully separated.
 
 A use case file looks like this:
 

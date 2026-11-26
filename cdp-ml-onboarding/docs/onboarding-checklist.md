@@ -39,8 +39,7 @@ In VS Code the first line gives autocomplete and underlines mistakes.
 | `gpu` | `false` unless the model needs a GPU (deep learning) |
 | `reads` | The tables the model reads |
 | `predictions_table` | Gold table for the predictions, starting with `ml_` |
-| `resource_group` *(optional)* | Only to use an **existing** resource group; left out = `rg-ml-<department>-<use_case_id>` is created |
-| `location` *(optional)* | Azure region of a new resource group; left out = the platform's default |
+| `location` *(optional)* | Azure region of the project's resource group; left out = the platform's default |
 | `names` *(optional)* | Own names for the workspace resources (platform naming rules) |
 | `reviewer_github_ids` *(optional)* | GitHub user IDs who approve model versions |
 

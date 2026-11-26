@@ -56,7 +56,7 @@ become its own GitHub repo. The design is in @docs/ml-platform-design.md
   goes to `data/predictions/<predictions_table>/`.
   `notebooks/fabric_batch_score.ipynb` (option A, PREDICT in Fabric) is optional only.
 - **Azure ML is the ML platform.** **One resource group per ML project**
-  (`rg-ml-<department>-<use-case>`, or an existing one) with its own workspace
+  (`rg-ml-<department>-<use-case>`, always created) with its own workspace
   (`ml-workspace`), identity and cluster (`ml-project`) and GitHub repo
   (`ml-project-github`). See `docs/decisions/0001-one-resource-group-per-ml-project.md`.
 - **Project setup at the end of step 3** (data and priority clear), not right
@@ -145,7 +145,7 @@ Phase 3: one resource group per ML project (decision 0001).
 
 15. Decision in the docs (decision record, design, CLAUDE.md) ✅
 16. `ml-infra-template` + `cdp-ml-onboarding`: per project resource group,
-    workspace, identity, cluster, GitHub repo from one YAML file
+    workspace, identity, cluster, GitHub repo from one YAML file ✅
 17. Sandbox on the new registry (stays in the user's own resource group)
 18. Docs of every folder (AGENTS.md, checklists, request form, slide brief)
 

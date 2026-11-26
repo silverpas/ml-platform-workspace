@@ -36,8 +36,8 @@ Jargon in one line each:
 ## Folder structure
 
 ```
-modules/ml-workspace/   ONCE per ML project, in the project's resource group
-                        (created by the platform, or an existing one): Azure ML
+modules/ml-workspace/   ONCE per ML project, in the project's own resource group
+                        (created by the platform from the YAML file): Azure ML
                         workspace + storage, key vault, Application Insights,
                         container registry. No compute.
 modules/ml-project/     ONCE per project: identity for GitHub Actions (OIDC)
@@ -64,12 +64,12 @@ YAML files, and the platform repo's Terraform calls the modules once per file
 (worked example: the `cdp-ml-onboarding` folder/repo).
 
 1. Per approved ML project: `registry/ml_use_cases/<department>__<id>.yaml` →
-   its resource group (`rg-ml-<department>-<id>`, or an existing one), one
+   its own resource group (`rg-ml-<department>-<id>`), one
    `ml-workspace`, one `ml-project` (Azure side) and one `ml-project-github`
    (GitHub side). See `examples/basic/` for direct calls.
 2. One resource group and workspace per project keeps projects separated
    (security, costs, clean removal); the price is a small fixed cost per
-   project. The modules also allow one workspace per department.
+   project.
 3. Open a pull request, run `terraform plan`, review it, then apply (in the
    platform repo, by the platform team). `ml-project` assigns roles, so it needs
    Owner, User Access Administrator or Role Based Access Control Administrator.

@@ -57,11 +57,8 @@ def test_each_repo_belongs_to_one_use_case():
 
 
 def test_each_project_has_its_own_resource_group():
-    """One resource group per project (decision 0001), also when it already exists."""
-    groups = [
-        load(p).get("resource_group", f"rg-ml-{load(p)['department']}-{load(p)['use_case_id']}")
-        for p in USE_CASE_FILES
-    ]
+    """Every project gets its own resource group, rg-ml-<department>-<use_case_id>."""
+    groups = [f"rg-ml-{load(p)['department']}-{load(p)['use_case_id']}" for p in USE_CASE_FILES]
     assert len(groups) == len(set(groups))
 
 

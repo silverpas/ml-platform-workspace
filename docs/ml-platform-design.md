@@ -191,7 +191,6 @@ Notes:
 
 `ml-workspace`, **once per project**, in the project's resource group: Azure ML
 workspace with storage, key vault, container registry and Application Insights.
-(The same module can serve a whole department, if a platform prefers that.)
 
 `ml-project`, **once per use case**. Nobody calls it by hand: the platform repo's
 Terraform calls it once for every file in the ML registry. A use case is described
