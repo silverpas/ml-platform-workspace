@@ -148,6 +148,8 @@ Phase 3: one resource group per ML project (decision 0001).
     workspace, identity, cluster, GitHub repo from one YAML file ✅
 17. Sandbox on the new registry (stays in the user's own resource group)
 18. Docs of every folder (AGENTS.md, checklists, request form) ✅; slide brief at the end
+19. `ml-project-template/GUIDE.md`: project layout, the rules, three ways to run
+    (GitHub workflows, terminal, Azure ML studio); the code stays as the example ✅
 
 ## How to work with me
 
