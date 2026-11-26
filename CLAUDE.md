@@ -10,7 +10,7 @@ become its own GitHub repo. The design is in @docs/ml-platform-design.md
 | Folder | Becomes | Users |
 |---|---|---|
 | `ml-project-template/` | Code template, one repo per ML use case | Data scientists, ML engineers |
-| `ml-infra-template/` | Terraform modules `ml-workspace` (per department), `ml-project` and `ml-project-github` (per use case) | Platform engineers |
+| `ml-infra-template/` | Terraform modules `ml-workspace`, `ml-project`, `ml-project-github` (all per ML project) | Platform engineers |
 | `cdp-ml-onboarding/` | Example slice of the platform (CDP) repo: what is added per use case | Platform team, platform lead |
 | `ml-requests/` | Request form and process for new ML use cases | Anyone with an idea, platform lead |
 
@@ -55,10 +55,10 @@ become its own GitHub repo. The design is in @docs/ml-platform-design.md
   same as the registry YAML's `predictions_table`). Locally, the same Delta table
   goes to `data/predictions/<predictions_table>/`.
   `notebooks/fabric_batch_score.ipynb` (option A, PREDICT in Fabric) is optional only.
-- **Azure ML is the ML platform.** One Azure ML workspace per department
-  (`ml-workspace` module, no compute), one `ml-project` per use case, which
-  creates the project's **own cluster** with the project's identity and tags
-  (data access and costs per project).
+- **Azure ML is the ML platform.** **One resource group per ML project**
+  (`rg-ml-<department>-<use-case>`, or an existing one) with its own workspace
+  (`ml-workspace`), identity and cluster (`ml-project`) and GitHub repo
+  (`ml-project-github`). See `docs/decisions/0001-one-resource-group-per-ml-project.md`.
 - **Project setup at the end of step 3** (data and priority clear), not right
   after "go". No shared playground: step 0 is local.
 - **Portable**: data reading behind one function (`src/data.py`), the approved
@@ -140,6 +140,14 @@ Phase 2: end to end in a personal Azure ML sandbox (CPU only, small quota).
 13. Sandbox-ready: jobs on uploaded data, guide `docs/azure-sandbox.md` ✅
     (the real run in the sandbox is done by the user)
 14. Later: the Fabric connection (design section 9)
+
+Phase 3: one resource group per ML project (decision 0001).
+
+15. Decision in the docs (decision record, design, CLAUDE.md) ✅
+16. `ml-infra-template` + `cdp-ml-onboarding`: per project resource group,
+    workspace, identity, cluster, GitHub repo from one YAML file
+17. Sandbox on the new registry (stays in the user's own resource group)
+18. Docs of every folder (AGENTS.md, checklists, request form, slide brief)
 
 ## How to work with me
 

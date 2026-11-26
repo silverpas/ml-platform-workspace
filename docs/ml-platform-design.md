@@ -63,12 +63,14 @@ when the data and the priority are clear, so no workspace or repo waits empty.
 
 - **Terraform** in the central platform repo *(in place)* creates the infrastructure.
 - **Azure ML is the ML platform** *(decided)*: training, tracking, registry and scoring.
-- **One Azure ML workspace per department** *(decided)*, shared by that department's
-  use cases. It holds experiments and the model registry.
-  Start with one workspace; add more only when other departments bring ML cases.
-- **One compute cluster per use case** *(decided)*, with the project's own identity
-  and tags. The identity decides what data the project can reach; the tags show
-  the costs per project. The cluster scales to 0 nodes when idle.
+- **One resource group per ML project** *(decided, see
+  [decision 0001](decisions/0001-one-resource-group-per-ml-project.md))*, with
+  everything the project needs inside: its own Azure ML workspace (experiments,
+  model registry) with storage, key vault, container registry and logs, plus the
+  project's identity and compute cluster. Projects are fully separated; the
+  resource group's bill is the project's cost.
+- **One compute cluster per project**, running as the project's own identity
+  (which decides what data the project can reach). It scales to 0 nodes when idle.
 - **One GitHub repo per use case** *(proposed)*, created from the template repo.
 - **Metadata-driven onboarding** *(proposed)*: ordering a project = adding **one
   YAML file** in the platform repo's ML registry, in a pull request, plus **one repo
@@ -78,10 +80,10 @@ when the data and the priority are clear, so no workspace or repo waits empty.
   departments and data sources ("a new domain starts as one YAML file").
 
 ```
-registry/ml_workspaces/<department>.yaml            once per department
-registry/ml_use_cases/<department>__<use-case>.yaml once per ML use case
+registry/ml_use_cases/<department>__<use-case>.yaml   one file per ML project
         ↓ checked against a JSON schema in the pull request
-Terraform reads the files → ml-workspace / ml-project modules → plan → approval → apply
+Terraform reads the files → per project: resource group → ml-workspace → ml-project
+        → ml-project-github → plan → approval → apply
 ```
 
 ### 4.2 Each model run
@@ -187,8 +189,9 @@ Notes:
 
 ### 5.2 Terraform modules
 
-`ml-workspace`, **once per department**: Azure ML workspace with storage, key
-vault and Application Insights. No compute: clusters belong to the projects.
+`ml-workspace`, **once per project**, in the project's resource group: Azure ML
+workspace with storage, key vault, container registry and Application Insights.
+(The same module can serve a whole department, if a platform prefers that.)
 
 `ml-project`, **once per use case**. Nobody calls it by hand: the platform repo's
 Terraform calls it once for every file in the ML registry. A use case is described
@@ -254,8 +257,8 @@ The module's exact design must follow how the platform team already structures T
 - How do Azure ML and Fabric connect over the network? See section 9.
 - Retirement criteria for models (e.g. no predictions consumed for X months).
 - Which environments (dev/test/prod) are needed, and when? **Proposed default:
-  one workspace per department.** Inside it, the approval gate (candidate →
-  champion) already keeps untested models away from real predictions. Separate
+  one workspace per project, no separate environments.** Inside it, the approval
+  gate (candidate → champion) already keeps untested models away from real predictions. Separate
   dev/prod workspaces stay optional, for platforms whose rules require them; the
   platform team decides.
 

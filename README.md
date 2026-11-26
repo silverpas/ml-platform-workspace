@@ -10,7 +10,7 @@ its own GitHub repo, so each one is self-contained.
 | Folder | What it is | Who uses it |
 |---|---|---|
 | [`ml-requests/`](ml-requests/README.md) | The front door: request form and process for new ML use cases | Anyone with an idea, platform lead |
-| [`ml-infra-template/`](ml-infra-template/README.md) | Terraform modules: one Azure ML workspace per department, one setup per use case | Platform engineers |
+| [`ml-infra-template/`](ml-infra-template/README.md) | Terraform modules: per ML project, a resource group with its own Azure ML workspace, identity, cluster and GitHub repo | Platform engineers |
 | [`cdp-ml-onboarding/`](cdp-ml-onboarding/README.md) | Example of what the platform repo (CDP) gets for each new use case | Platform team, platform lead |
 | [`ml-project-template/`](ml-project-template/README.md) | Code template: one repo per use case, from data to approved model to predictions | Data scientists, ML engineers |
 
