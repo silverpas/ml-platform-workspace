@@ -1,7 +1,8 @@
 # Onboarding a new ML use case
 
-A new ML use case is **one YAML file in a pull request**. Nobody writes
-Terraform for it: the platform's Terraform reads the file and does the rest.
+A new ML project is **one YAML file in a pull request**. Nobody writes
+Terraform for it: the platform's Terraform reads the file and creates the
+project's resource group, Azure ML workspace, identity, cluster and GitHub repo.
 
 Example used below: use case `tool-wear` in department `manufacturing`.
 
@@ -13,18 +14,14 @@ Example used below: use case `tool-wear` in department `manufacturing`.
       and a **risk tier** (`exploration`, `decision_support` or `production_critical`).
 - [ ] The data the model needs is in the platform, and you know its tables
       (`<domain>.<layer>.<table>`, e.g. `manufacturing.gold.fact_machine_sensors`).
-- [ ] The project repo exists, created from `ml-project-template` with
-      **Use this template** (e.g. `example-org/ml-tool-wear`).
+- [ ] The project has a name for its repo, e.g. `example-org/ml-tool-wear`
+      (the apply creates it from `ml-project-template`).
 
-## 1. Is ML turned on for the department?
+## 1. Costs to know
 
-Look for `registry/ml_workspaces/<department>.yaml`.
-
-- **It exists:** go to step 2.
-- **It does not:** add it in the same pull request (copy
-  `registry/ml_workspaces/manufacturing.yaml`). This creates the department's
-  Azure ML workspace (about 5-10 EUR per month while it exists). It has no
-  compute of its own: every use case gets its own cluster.
+Every project gets its own resource group and workspace: about 5-10 EUR per
+month while it exists (registry, storage, logs), plus its cluster only while
+it runs jobs. Retiring the project removes all of it.
 
 ## 2. Add the use case file
 
@@ -35,26 +32,31 @@ In VS Code the first line gives autocomplete and underlines mistakes.
 | Field | What to write |
 |---|---|
 | `use_case_id` | Short name, lowercase with hyphens: the same as the model and the repo (`ml-<id>`) |
-| `department` | The department; its `ml_workspaces` file must exist |
+| `department` | The department (used in names and tags) |
 | `owner` | The model owner |
 | `github_repo` | `org/repo` of the project repo; only this repo can log in to Azure |
 | `risk_tier` | From qualification |
 | `gpu` | `false` unless the model needs a GPU (deep learning) |
 | `reads` | The tables the model reads |
 | `predictions_table` | Gold table for the predictions, starting with `ml_` |
+| `resource_group` *(optional)* | Only to use an **existing** resource group; left out = `rg-ml-<department>-<use_case_id>` is created |
+| `location` *(optional)* | Azure region of a new resource group; left out = the platform's default |
+| `names` *(optional)* | Own names for the workspace resources (platform naming rules) |
+| `reviewer_github_ids` *(optional)* | GitHub user IDs who approve model versions |
 
 ## 3. Open the pull request
 
 The checks run by themselves:
 
 - every file follows its schema (`tests/test_registry.py`);
-- the file name matches its content, the department has a workspace;
+- the file name matches its content, each project has its own resource group;
 - `terraform plan` shows what will be created.
 
-**Read the plan.** For a new use case in an existing department you should see
-only: one identity, two federated credentials (the repo's `main` branch and its
-`production` environment) and one role assignment *AzureML Data Scientist*.
-Never Owner or Contributor. **Nothing destroyed.**
+**Read the plan.** For a new project you should see only its own resources: a
+resource group, a workspace with its storage, key vault, container registry
+and logs, an identity, a cluster, two role assignments (*AzureML Data
+Scientist*, *AcrPull*; never Owner or Contributor), and on GitHub a repo, five
+variables, an environment and two federated credentials. **Nothing destroyed.**
 
 ## 4. Merge and apply
 

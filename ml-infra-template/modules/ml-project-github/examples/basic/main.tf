@@ -53,8 +53,8 @@ module "tool_wear" {
   owner                         = "[owner]"
   github_repo                   = "example-org/ml-tool-wear"
   create_github_login           = false # ml-project-github creates the login rules
-  workspace_name                = "[department workspace]"
-  workspace_resource_group_name = "[department resource group]"
+  workspace_name                = "[project workspace]"
+  workspace_resource_group_name = "[project resource group]"
   container_registry_id         = "[workspace container registry ID]"
 }
 

@@ -1,4 +1,5 @@
-# What one ML use case gets inside its department's Azure ML workspace:
+# What one ML project gets inside its Azure ML workspace (by default the
+# project's own, in its own resource group: see the ml-workspace module):
 #   1. an identity (a "robot account") for the project's GitHub workflows and jobs,
 #   2. permission for GitHub to log in as that identity, without secrets (OIDC),
 #   3. permission for that identity to run jobs and register models in the workspace,
@@ -6,7 +7,7 @@
 #      with the use case (data access and costs per project), scaling to 0,
 #   5. optionally, an Entra ID group for the team with the same permission.
 
-# The department workspace already exists (created with the ml-workspace module).
+# The workspace already exists (created with the ml-workspace module).
 # "data" means: look it up, don't create it.
 data "azurerm_machine_learning_workspace" "department" {
   name                = var.workspace_name

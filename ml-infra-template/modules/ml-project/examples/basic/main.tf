@@ -32,9 +32,9 @@ module "ml_tool_wear" {
   gpu          = false
   data_domains = ["[data domain]"] # replace; access is granted in Fabric by hand
 
-  # The department workspace, created once with the ml-workspace module.
-  workspace_name                = "[department workspace]"
-  workspace_resource_group_name = "[department resource group]"
+  # The project's workspace, created with the ml-workspace module.
+  workspace_name                = "[project workspace]"
+  workspace_resource_group_name = "[project resource group]"
   container_registry_id         = "[workspace container registry ID]" # ml-workspace output
 }
 

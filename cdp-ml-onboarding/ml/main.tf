@@ -1,62 +1,88 @@
-# Metadata-driven ML onboarding: Terraform reads the ML registry (YAML files)
-# and calls the shared modules once per file. Nobody writes a module block per
-# department or per use case; they add a YAML file in a pull request.
+# Metadata-driven ML onboarding: Terraform reads the ML registry (one YAML file
+# per ML project) and builds everything the project needs. Nobody writes a
+# module block per project; they add a YAML file in a pull request.
 #
-#   registry/ml_workspaces/<department>.yaml             -> module.ml_workspace["<department>"]
-#   registry/ml_use_cases/<department>__<use_case>.yaml  -> module.ml_project["<department>__<use_case>"]
+#   registry/ml_use_cases/<department>__<use_case>.yaml
+#     -> resource group  rg-ml-<department>-<use_case> (or an existing one)
+#     -> module.ml_workspace       the project's own Azure ML workspace
+#     -> module.ml_project         its identity, cluster and roles
+#     -> module.ml_project_github  its GitHub repo, variables, approval gate, login
 #
-# The YAML files are checked against registry/schema/*.schema.json in the pull
-# request (tests/test_registry.py). The checks below repeat the rules that
-# connect two files, so a plan never runs on an inconsistent registry.
+# One resource group and workspace per project: see
+# docs/decisions/0001-one-resource-group-per-ml-project.md (workspace repo).
+# The YAML files are checked against registry/schema/ml_use_case.schema.json in
+# the pull request (tests/test_registry.py). The checks below repeat the rules
+# that connect files, so a plan never runs on an inconsistent registry.
 
 locals {
   registry_dir = coalesce(var.registry_dir, "${path.module}/../registry")
 
   # One entry per file; the key is the file name without .yaml.
-  workspaces = {
-    for f in fileset("${local.registry_dir}/ml_workspaces", "*.yaml") :
-    trimsuffix(f, ".yaml") => yamldecode(file("${local.registry_dir}/ml_workspaces/${f}"))
-  }
   all_use_cases = {
     for f in fileset("${local.registry_dir}/ml_use_cases", "*.yaml") :
     trimsuffix(f, ".yaml") => yamldecode(file("${local.registry_dir}/ml_use_cases/${f}"))
   }
 
   # Retired use cases stay in the registry for the record, but get nothing:
-  # removing them from this map makes Terraform delete their identity and access.
-  active_use_cases = {
+  # removing them from this map makes Terraform delete their resources.
+  use_cases = {
     for key, uc in local.all_use_cases : key => uc if lookup(uc, "status", "active") == "active"
+  }
+
+  # Per project: its resource group. A name in the file = an existing group;
+  # no name = the platform creates rg-ml-<department>-<use_case>.
+  resource_groups = {
+    for key, uc in local.use_cases : key => {
+      name     = lookup(uc, "resource_group", "rg-ml-${uc.department}-${uc.use_case_id}")
+      existing = contains(keys(uc), "resource_group")
+      location = lookup(uc, "location", var.default_location)
+    }
   }
 
   # Rules that connect files. Anything listed here stops the plan (see outputs.tf).
   problems = concat(
-    [for key, ws in local.workspaces : "ml_workspaces/${key}.yaml: department must be \"${key}\" (the file name)" if ws.department != key],
     [for key, uc in local.all_use_cases : "ml_use_cases/${key}.yaml: file name must be ${uc.department}__${uc.use_case_id}.yaml" if key != "${uc.department}__${uc.use_case_id}"],
-    [for key, uc in local.active_use_cases : "ml_use_cases/${key}.yaml: no ml_workspaces/${uc.department}.yaml (turn on ML for the department first)" if !contains(keys(local.workspaces), uc.department)],
-    [for key, uc in local.active_use_cases : "ml_use_cases/${key}.yaml: github_repo must belong to ${var.github_owner}" if var.manage_github && split("/", uc.github_repo)[0] != var.github_owner],
+    [for key, uc in local.use_cases : "ml_use_cases/${key}.yaml: github_repo must belong to ${var.github_owner}" if var.manage_github && split("/", uc.github_repo)[0] != var.github_owner],
+    [for name in distinct([for rg in values(local.resource_groups) : rg.name]) : "resource group ${name} is used by more than one project (each project needs its own)" if length([for rg in values(local.resource_groups) : rg if rg.name == name]) > 1],
   )
-
-  # Only use cases whose department has a workspace are planned; the others are
-  # reported in `problems` instead of failing with a confusing error.
-  use_cases = {
-    for key, uc in local.active_use_cases : key => uc if contains(keys(local.workspaces), uc.department)
-  }
 }
 
-# Once per department with ML turned on.
+# 1. The project's resource group (skipped when the file names an existing one).
+resource "azurerm_resource_group" "project" {
+  for_each = { for key, rg in local.resource_groups : key => rg if !rg.existing }
+
+  name     = each.value.name
+  location = each.value.location
+  tags = merge(var.extra_tags, {
+    department = local.use_cases[each.key].department
+    use_case   = local.use_cases[each.key].use_case_id
+    owner      = local.use_cases[each.key].owner
+    managed_by = "terraform"
+  })
+}
+
+# 2. The project's own Azure ML workspace, in its resource group.
 module "ml_workspace" {
   source   = "../../ml-infra-template/modules/ml-workspace" # ASSUMPTION: in the real repo, wherever the platform keeps modules
-  for_each = local.workspaces
+  for_each = local.use_cases
 
-  # ASSUMPTION: names follow the module's defaults (mlw-<department>, ...). If the
-  # platform defines names centrally, pass them here: names = { workspace = ... }.
-  department          = each.value.department
-  resource_group_name = each.value.resource_group
+  department = each.value.department
+  # A created group is referenced through the resource, so Terraform creates it first.
+  resource_group_name = local.resource_groups[each.key].existing ? local.resource_groups[each.key].name : azurerm_resource_group.project[each.key].name
   owner               = each.value.owner
-  tags                = var.extra_tags
+
+  # Names per project. The file may set its own (platform naming rules, or an
+  # existing workspace); storage, key vault and registry get unique defaults.
+  names = merge({
+    workspace     = "mlw-${each.value.department}-${each.value.use_case_id}"
+    log_analytics = "log-mlw-${each.value.department}-${each.value.use_case_id}"
+    app_insights  = "appi-mlw-${each.value.department}-${each.value.use_case_id}"
+  }, lookup(each.value, "names", {}))
+
+  tags = merge(var.extra_tags, { use_case = each.value.use_case_id })
 }
 
-# Once per active ML use case.
+# 3. The project's identity, cluster and roles, in its workspace.
 module "ml_project" {
   source   = "../../ml-infra-template/modules/ml-project"
   for_each = local.use_cases
@@ -71,9 +97,9 @@ module "ml_project" {
   create_github_login           = !var.manage_github
   github_ids                    = var.manage_github ? null : lookup(each.value, "github_ids", null)
   gpu                           = lookup(each.value, "gpu", false) # the project's own cluster: CPU or GPU
-  container_registry_id         = module.ml_workspace[each.value.department].container_registry_id
-  workspace_name                = module.ml_workspace[each.value.department].workspace_name
-  workspace_resource_group_name = module.ml_workspace[each.value.department].resource_group_name
+  container_registry_id         = module.ml_workspace[each.key].container_registry_id
+  workspace_name                = module.ml_workspace[each.key].workspace_name
+  workspace_resource_group_name = module.ml_workspace[each.key].resource_group_name
 
   # "manufacturing.gold.fact_machine_sensors" -> data domain "manufacturing"
   data_domains = distinct([for table in each.value.reads : split(".", table)[0]])
@@ -85,14 +111,12 @@ module "ml_project" {
     predictions_table = each.value.predictions_table
   })
 
-  # A department's first use case is often added together with its workspace:
-  # wait until the workspace exists before looking it up.
+  # The workspace is created in the same apply: wait for it before looking it up.
   depends_on = [module.ml_workspace]
 }
 
-# Once per active ML use case, the GitHub side: the repo (from the template),
-# its five Azure variables and its approval-gated environment. Skipped when
-# manage_github = false.
+# 4. The GitHub side: the repo (from the template), its five Azure variables,
+# its approval-gated environment and login rules. Skipped when manage_github = false.
 module "ml_project_github" {
   source   = "../../ml-infra-template/modules/ml-project-github" # ASSUMPTION: as above
   for_each = var.manage_github ? local.use_cases : {}

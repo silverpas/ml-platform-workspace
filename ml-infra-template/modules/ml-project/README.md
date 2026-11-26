@@ -1,11 +1,12 @@
 # Terraform module: `ml-project`
 
-Plugs **one ML use case** into its department's existing Azure ML workspace.
+Plugs **one ML project** into its existing Azure ML workspace (by default the
+project's own, in its own resource group).
 The platform team adds one `module` block per use case in its own Terraform repo
 (see [examples/basic/main.tf](examples/basic/main.tf)).
 
 This module does **not** create the workspace. It comes from the
-[`ml-workspace`](../ml-workspace/README.md) module, once per department. It
+[`ml-workspace`](../ml-workspace/README.md) module, once per project. It
 **does** create the project's own compute cluster.
 
 ## What it creates
@@ -39,7 +40,7 @@ replaces the default names; anything left out keeps its default. The optional
 | `owner` | yes | `maintenance-analytics-team` |
 | `github_repo` | yes | `example-org/ml-tool-wear` |
 | `github_ids` | no (none) | `{ owner_id = 123, repo_id = 456 }`: only if GitHub's OIDC subject contains IDs (see below) |
-| `workspace_name` | yes | the department workspace |
+| `workspace_name` | yes | the project's workspace |
 | `workspace_resource_group_name` | yes | its resource group |
 | `container_registry_id` | yes, unless `create_role_assignments = false` | ml-workspace output `container_registry_id` |
 | `gpu` | no (`false`) | `true` = a GPU cluster (needs GPU quota from Microsoft first) |

@@ -1,0 +1,12 @@
+schema_version: "1.0.0"
+use_case_id: tool-wear
+department: manufacturing
+owner: team
+github_repo: example-org/ml-tool-wear
+risk_tier: decision_support
+reads:
+  - manufacturing.gold.fact_example
+predictions_table: ml_tool_wear_predictions
+resource_group: rg-existing-ml
+names:
+  workspace: mlw-existing

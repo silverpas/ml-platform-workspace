@@ -2,12 +2,17 @@
 
 output "registry_checks" {
   description = "Rules that connect registry files. The plan stops if any is broken."
-  value       = "ok: ${length(local.workspaces)} ML workspace(s), ${length(local.use_cases)} active use case(s)"
+  value       = "ok: ${length(local.use_cases)} active ML project(s)"
 
   precondition {
     condition     = length(local.problems) == 0
     error_message = "The ML registry is inconsistent:\n- ${join("\n- ", local.problems)}"
   }
+}
+
+output "project_resource_groups" {
+  description = "Per use case: its resource group (all its Azure resources are inside)."
+  value       = { for key, rg in local.resource_groups : key => rg.name }
 }
 
 output "project_repos" {

@@ -1,9 +1,11 @@
 # Terraform module: `ml-workspace`
 
-Creates **one Azure ML workspace for a department**, with everything it needs.
-The platform team adds one `module` block per department in its own Terraform
-repo (see [examples/basic/main.tf](examples/basic/main.tf)). Use cases then plug
-in with the [`ml-project`](../ml-project/README.md) module.
+Creates **one Azure ML workspace** with everything it needs. The default
+setup is **one workspace per ML project**, in the project's own resource group,
+so projects are fully separated; it can also serve a whole department. The
+platform's registry Terraform calls it once per project (or see
+[examples/basic/main.tf](examples/basic/main.tf) for a direct call). The
+project then plugs in with the [`ml-project`](../ml-project/README.md) module.
 
 The resource group must already exist: the module creates everything **inside**
 it, so it fits however the platform team organizes resource groups, and
@@ -40,7 +42,7 @@ names = {
 ```
 
 `environment` (e.g. `dev`, `prod`) is **optional and off by default**. The
-recommended setup is one workspace per department: the approval gate
+recommended setup is one workspace per project, without environments: the approval gate
 (candidate → champion) already keeps untested models away from real
 predictions. Set it only if the platform's rules require separate
 environments; it adds `-<environment>` to the default names and an

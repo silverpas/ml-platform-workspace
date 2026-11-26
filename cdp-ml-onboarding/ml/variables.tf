@@ -1,7 +1,13 @@
 variable "registry_dir" {
-  description = "Folder with ml_workspaces/ and ml_use_cases/. Default: ../registry next to this folder. Tests point it at fixtures."
+  description = "Folder with ml_use_cases/. Default: ../registry next to this folder. Tests point it at fixtures."
   type        = string
   default     = null
+}
+
+variable "default_location" {
+  description = "Azure region for new project resource groups, unless a project's file sets location."
+  type        = string
+  default     = "swedencentral" # ASSUMPTION: replace with the platform's region
 }
 
 variable "manage_github" {

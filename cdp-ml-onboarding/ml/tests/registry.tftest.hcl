@@ -41,23 +41,32 @@ run "the_real_example_registry_plans" {
   command = plan
 
   assert {
-    condition     = keys(module.ml_workspace) == ["manufacturing"]
-    error_message = "registry/ml_workspaces/manufacturing.yaml should give one workspace."
+    condition     = keys(module.ml_project) == ["manufacturing__tool-wear"] && keys(module.ml_project_github) == ["manufacturing__tool-wear"]
+    error_message = "registry/ml_use_cases/manufacturing__tool-wear.yaml should give one project, Azure and GitHub side."
   }
 
   assert {
-    condition     = keys(module.ml_project) == ["manufacturing__tool-wear"]
-    error_message = "registry/ml_use_cases/manufacturing__tool-wear.yaml should give one project."
-  }
-
-  assert {
-    condition     = keys(module.ml_project_github) == ["manufacturing__tool-wear"]
-    error_message = "Each use case should also get its GitHub repo, variables and environment."
-  }
-
-  assert {
-    condition     = output.registry_checks == "ok: 1 ML workspace(s), 1 active use case(s)"
+    condition     = output.registry_checks == "ok: 1 active ML project(s)"
     error_message = "The example registry should pass every check."
+  }
+}
+
+run "each_project_gets_its_own_resource_group_and_workspace" {
+  command = plan
+
+  assert {
+    condition     = azurerm_resource_group.project["manufacturing__tool-wear"].name == "rg-ml-manufacturing-tool-wear" && azurerm_resource_group.project["manufacturing__tool-wear"].location == "swedencentral"
+    error_message = "A project without resource_group gets rg-ml-<department>-<use_case> in the default region."
+  }
+
+  assert {
+    condition     = keys(module.ml_workspace) == ["manufacturing__tool-wear"]
+    error_message = "Each project gets its own workspace."
+  }
+
+  assert {
+    condition     = azurerm_resource_group.project["manufacturing__tool-wear"].tags["use_case"] == "tool-wear"
+    error_message = "The resource group should be tagged with its use case."
   }
 }
 
@@ -74,16 +83,34 @@ run "one_file_per_use_case_retired_ones_get_nothing" {
   }
 
   assert {
-    condition     = length(module.ml_workspace) == 1
-    error_message = "Both use cases share the department's one workspace."
+    condition     = length(module.ml_workspace) == 2 && length(azurerm_resource_group.project) == 2
+    error_message = "Two projects, two resource groups, two workspaces."
   }
 }
 
-run "use_case_without_department_workspace_is_refused" {
+run "an_existing_resource_group_is_used_not_created" {
   command = plan
 
   variables {
-    registry_dir = "tests/fixtures/missing_workspace"
+    registry_dir = "tests/fixtures/existing_resource_group"
+  }
+
+  assert {
+    condition     = length(azurerm_resource_group.project) == 0
+    error_message = "A project that names an existing resource group must not create one."
+  }
+
+  assert {
+    condition     = output.project_resource_groups["manufacturing__tool-wear"] == "rg-existing-ml"
+    error_message = "The project must use the resource group named in its file."
+  }
+}
+
+run "two_projects_in_one_resource_group_are_refused" {
+  command = plan
+
+  variables {
+    registry_dir = "tests/fixtures/shared_resource_group"
   }
 
   expect_failures = [output.registry_checks]

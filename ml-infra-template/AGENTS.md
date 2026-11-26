@@ -36,16 +36,17 @@ Jargon in one line each:
 ## Folder structure
 
 ```
-modules/ml-workspace/   ONCE per department, in an EXISTING resource group:
-                        Azure ML workspace + storage, key vault, Application
-                        Insights, container registry. No compute.
-modules/ml-project/     ONCE per use case: identity for GitHub Actions (OIDC)
+modules/ml-workspace/   ONCE per ML project, in the project's resource group
+                        (created by the platform, or an existing one): Azure ML
+                        workspace + storage, key vault, Application Insights,
+                        container registry. No compute.
+modules/ml-project/     ONCE per project: identity for GitHub Actions (OIDC)
                         and jobs, the project's OWN cluster (CPU or GPU, scales
                         to 0, tagged per project, runs as that identity),
                         AzureML Data Scientist + AcrPull roles, optional Entra
                         ID team group, data domains (placeholders).
                         Outputs: the IDs for the project's GitHub variables
-modules/ml-project-github/  ONCE per use case, with ml-project: the project's
+modules/ml-project-github/  ONCE per project, with ml-project: the project's
                         GitHub repo (from the template), its five Azure
                         variables, the `production` environment (approval
                         gate) and the GitHub login rules (OIDC, numeric IDs)
@@ -62,11 +63,13 @@ The modules are the engine behind a **metadata-driven** registry: people add
 YAML files, and the platform repo's Terraform calls the modules once per file
 (worked example: the `cdp-ml-onboarding` folder/repo).
 
-1. Once per department: `registry/ml_workspaces/<department>.yaml` → one
-   `ml-workspace` (needs Contributor on the resource group).
-2. Per approved use case: `registry/ml_use_cases/<department>__<id>.yaml` → one
-   `ml-project` (Azure side) and one `ml-project-github` (GitHub side; see
-   `examples/basic/` for direct calls).
+1. Per approved ML project: `registry/ml_use_cases/<department>__<id>.yaml` →
+   its resource group (`rg-ml-<department>-<id>`, or an existing one), one
+   `ml-workspace`, one `ml-project` (Azure side) and one `ml-project-github`
+   (GitHub side). See `examples/basic/` for direct calls.
+2. One resource group and workspace per project keeps projects separated
+   (security, costs, clean removal); the price is a small fixed cost per
+   project. The modules also allow one workspace per department.
 3. Open a pull request, run `terraform plan`, review it, then apply (in the
    platform repo, by the platform team). `ml-project` assigns roles, so it needs
    Owner, User Access Administrator or Role Based Access Control Administrator.
@@ -74,16 +77,16 @@ YAML files, and the platform repo's Terraform calls the modules once per file
    (`AZURE_CLIENT_ID`, ...), the `production` environment and the GitHub login
    rules. Without it, copy the outputs to the repo by hand.
 
-**Fitting the platform's rules.** Every name has a default (`mlw-<department>`,
-`id-ml-<department>-<use case>`, ...). If the platform has naming rules, pass
+**Fitting the platform's rules.** Every name has a default (`mlw-<department>-<use case>`
+from the registry, `id-ml-<department>-<use case>`, ...). If the platform has naming rules, pass
 the names in with `names = { ... }` (for `ml-project` also `cluster`);
 anything left out keeps its default. `environment` is optional and off by
-default: one workspace per department is the recommended setup, because the
-approval gate already separates tested from untested models.
+default: one workspace per project without environments is the recommended
+setup, because the approval gate already separates tested from untested models.
 
 ## Commands (no Azure account needed)
 
-For each module (`ml-workspace`, `ml-project`):
+For each module (`ml-workspace`, `ml-project`, `ml-project-github`):
 
 ```bash
 terraform -chdir=modules/ml-workspace fmt -recursive

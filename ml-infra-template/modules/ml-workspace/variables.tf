@@ -1,4 +1,4 @@
-# Inputs: what the platform team fills in, once per department.
+# Inputs: what the platform team fills in, once per ML project (or per department).
 
 variable "department" {
   description = "Department that owns the workspace, e.g. \"manufacturing\". Used in names and tags."
@@ -16,7 +16,7 @@ variable "resource_group_name" {
 }
 
 variable "environment" {
-  description = "Optional, e.g. \"dev\" or \"prod\". null (default) = one workspace per department, the recommended setup: the approval gate (candidate -> champion) already separates tested from untested models. Set it only if the platform's rules require separate environments; it is added to names and tags."
+  description = "Optional, e.g. \"dev\" or \"prod\". null (default) = no separate environments, the recommended setup: the approval gate (candidate -> champion) already separates tested from untested models. Set it only if the platform's rules require separate environments; it is added to names and tags."
   type        = string
   default     = null
 

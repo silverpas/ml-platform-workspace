@@ -6,7 +6,7 @@
 # nothing is created. Each `run` makes a plan and checks what WOULD be created.
 
 mock_provider "azurerm" {
-  # The fake "existing" department workspace the module looks up.
+  # The fake "existing" workspace the module looks up.
   mock_data "azurerm_machine_learning_workspace" {
     defaults = {
       id       = "/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/rg-ml-manufacturing/providers/Microsoft.MachineLearningServices/workspaces/mlw-manufacturing"
@@ -161,7 +161,7 @@ run "least_privilege_role_on_the_workspace" {
 
   assert {
     condition     = endswith(azurerm_role_assignment.workspace[0].scope, "/workspaces/mlw-manufacturing")
-    error_message = "The role must be limited to the department workspace."
+    error_message = "The role must be limited to the project's workspace."
   }
 }
 

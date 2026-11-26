@@ -1,4 +1,4 @@
-# Example: how the platform team adds ONE department workspace in its own
+# Example: how the platform team adds ONE workspace (for one ML project) in its own
 # Terraform repo. This file is only an example: it is validated, never applied
 # from this template.
 

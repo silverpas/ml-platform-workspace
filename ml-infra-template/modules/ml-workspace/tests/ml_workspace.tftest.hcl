@@ -125,7 +125,7 @@ run "no_environment_by_default" {
 
   assert {
     condition     = !contains(keys(azurerm_machine_learning_workspace.this.tags), "environment")
-    error_message = "Without an environment there should be no environment tag (one workspace per department)."
+    error_message = "Without an environment there should be no environment tag (the default)."
   }
 }
 

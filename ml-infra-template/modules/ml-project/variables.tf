@@ -23,7 +23,7 @@ variable "name" {
 }
 
 variable "environment" {
-  description = "Optional, e.g. \"dev\" or \"prod\", the same as the workspace's. null (default) = no environment, one workspace per department. Added to names and tags."
+  description = "Optional, e.g. \"dev\" or \"prod\", the same as the workspace's. null (default) = no environment. Added to names and tags."
   type        = string
   default     = null
 
@@ -86,7 +86,7 @@ variable "github_ids" {
 # --- Where it plugs in (created by the platform team, not by this module) ---
 
 variable "workspace_name" {
-  description = "Name of the department's existing Azure ML workspace."
+  description = "Name of the project's existing Azure ML workspace (ml-workspace output workspace_name)."
   type        = string
 }
 

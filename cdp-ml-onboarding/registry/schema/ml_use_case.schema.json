@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "ml_use_case.schema.json",
   "title": "ML use case",
-  "description": "One ML use case. File name: registry/ml_use_cases/<department>__<use_case_id>.yaml. The platform's Terraform reads it and creates the use case's identity and access (ml-project module).",
+  "description": "One ML use case. File name: registry/ml_use_cases/<department>__<use_case_id>.yaml. The platform's Terraform reads it and creates the project's resource group, workspace, identity, cluster and GitHub repo.",
   "type": "object",
   "additionalProperties": false,
   "required": [
@@ -27,7 +27,7 @@
       "pattern": "^[a-z][a-z0-9-]{1,22}[a-z0-9]$"
     },
     "department": {
-      "description": "Department that owns the use case. A file registry/ml_workspaces/<department>.yaml must exist.",
+      "description": "Department that owns the use case. Used in names (rg-ml-<department>-<use_case_id>) and tags.",
       "type": "string",
       "pattern": "^[a-z][a-z0-9-]{1,19}$"
     },
@@ -46,6 +46,29 @@
       "description": "Model owner: a person or team, e.g. an email address or team name.",
       "type": "string",
       "minLength": 3
+    },
+    "resource_group": {
+      "description": "Optional: an EXISTING resource group for this project (each project needs its own). Left out = the platform creates rg-ml-<department>-<use_case_id>.",
+      "type": "string",
+      "pattern": "^[A-Za-z0-9._()-]{1,90}$"
+    },
+    "location": {
+      "description": "Optional: Azure region of a new resource group, e.g. westeurope. Left out = the platform's default region.",
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9]{2,30}$"
+    },
+    "names": {
+      "description": "Optional: own names for the project's workspace resources (platform naming rules, or an existing workspace). Left out = mlw-<department>-<use_case_id> and the module's defaults.",
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "workspace": { "type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9_-]{2,32}$" },
+        "storage_account": { "type": "string", "pattern": "^[a-z0-9]{3,24}$" },
+        "key_vault": { "type": "string", "pattern": "^[A-Za-z][A-Za-z0-9-]{1,22}[A-Za-z0-9]$" },
+        "container_registry": { "type": "string", "pattern": "^[A-Za-z0-9]{5,50}$" },
+        "log_analytics": { "type": "string", "minLength": 4, "maxLength": 63 },
+        "app_insights": { "type": "string", "minLength": 1, "maxLength": 255 }
+      }
     },
     "github_repo": {
       "description": "The use case's repo, as org/repo. Only workflows from this repo can log in to Azure.",

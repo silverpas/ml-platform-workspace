@@ -1,8 +1,8 @@
 """Checks on the ML registry, run in every pull request (no Azure needed).
 
 1. Every YAML file follows its JSON schema (registry/schema/).
-2. The rules that connect files: file names, a workspace for every
-   department, no two use cases with the same repo.
+2. The rules that connect files: file names, no two use cases with the same
+   repo or the same resource group.
 3. Broken examples in tests/invalid/ are really refused.
 """
 
@@ -17,7 +17,6 @@ ROOT = Path(__file__).parents[1]
 REGISTRY = ROOT / "registry"
 INVALID = Path(__file__).parent / "invalid"
 
-WORKSPACE_FILES = sorted((REGISTRY / "ml_workspaces").glob("*.yaml"))
 USE_CASE_FILES = sorted((REGISTRY / "ml_use_cases").glob("*.yaml"))
 
 
@@ -38,12 +37,7 @@ def errors(name: str, data: dict) -> list[str]:
 
 
 def test_the_registry_is_not_empty():
-    assert WORKSPACE_FILES and USE_CASE_FILES
-
-
-@pytest.mark.parametrize("path", WORKSPACE_FILES, ids=lambda p: p.name)
-def test_workspace_file_follows_its_schema(path: Path):
-    assert errors("ml_workspace", load(path)) == []
+    assert USE_CASE_FILES
 
 
 @pytest.mark.parametrize("path", USE_CASE_FILES, ids=lambda p: p.name)
@@ -51,18 +45,10 @@ def test_use_case_file_follows_its_schema(path: Path):
     assert errors("ml_use_case", load(path)) == []
 
 
-@pytest.mark.parametrize("path", WORKSPACE_FILES, ids=lambda p: p.name)
-def test_workspace_file_name_is_the_department(path: Path):
-    assert path.stem == load(path)["department"]
-
-
 @pytest.mark.parametrize("path", USE_CASE_FILES, ids=lambda p: p.name)
 def test_use_case_file_name_and_department(path: Path):
     use_case = load(path)
     assert path.stem == f"{use_case['department']}__{use_case['use_case_id']}"
-    assert (REGISTRY / "ml_workspaces" / f"{use_case['department']}.yaml").is_file(), (
-        "turn on ML for the department first (registry/ml_workspaces/<department>.yaml)"
-    )
 
 
 def test_each_repo_belongs_to_one_use_case():
@@ -70,16 +56,23 @@ def test_each_repo_belongs_to_one_use_case():
     assert len(repos) == len(set(repos))
 
 
-@pytest.mark.parametrize("path", WORKSPACE_FILES + USE_CASE_FILES, ids=lambda p: p.name)
+def test_each_project_has_its_own_resource_group():
+    """One resource group per project (decision 0001), also when it already exists."""
+    groups = [
+        load(p).get("resource_group", f"rg-ml-{load(p)['department']}-{load(p)['use_case_id']}")
+        for p in USE_CASE_FILES
+    ]
+    assert len(groups) == len(set(groups))
+
+
+@pytest.mark.parametrize("path", USE_CASE_FILES, ids=lambda p: p.name)
 def test_editor_finds_the_schema(path: Path):
     """The first line lets VS Code autocomplete and underline mistakes while typing."""
-    kind = "ml_workspace" if path.parent.name == "ml_workspaces" else "ml_use_case"
     assert path.read_text().splitlines()[0] == (
-        f"# yaml-language-server: $schema=../schema/{kind}.schema.json"
+        "# yaml-language-server: $schema=../schema/ml_use_case.schema.json"
     )
 
 
 @pytest.mark.parametrize("path", sorted(INVALID.glob("*.yaml")), ids=lambda p: p.name)
 def test_broken_examples_are_refused(path: Path):
-    kind = "ml_workspace" if path.name.startswith("workspace_") else "ml_use_case"
-    assert errors(kind, load(path)), f"{path.name} should be refused by the schema"
+    assert errors("ml_use_case", load(path)), f"{path.name} should be refused by the schema"

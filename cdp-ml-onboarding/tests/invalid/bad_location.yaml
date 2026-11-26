@@ -1,0 +1,11 @@
+# Refused: a region is one lowercase word, e.g. westeurope.
+schema_version: "1.0.0"
+use_case_id: tool-wear
+department: manufacturing
+owner: "[model owner]"
+github_repo: "example-org/ml-tool-wear"
+risk_tier: decision_support
+reads:
+  - manufacturing.gold.fact_machine_sensors
+predictions_table: ml_tool_wear_predictions
+location: "West Europe"

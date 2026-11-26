@@ -1,14 +1,17 @@
 # ML registry (platform repo example)
 
 An example of how a data platform's Terraform repo onboards machine learning,
-**metadata-driven**: a new ML use case is **one YAML file in a pull request**.
+**metadata-driven**: a new ML project is **one YAML file in a pull request**.
 
 ```
-registry/ml_workspaces/manufacturing.yaml              turns on ML for a department (once)
-registry/ml_use_cases/manufacturing__tool-wear.yaml    one ML use case
-        ↓ checked against registry/schema/*.schema.json
-ml/  Terraform reads every file → ml-workspace / ml-project modules → plan → approval → apply
+registry/ml_use_cases/manufacturing__tool-wear.yaml    one ML project
+        ↓ checked against registry/schema/ml_use_case.schema.json
+ml/  Terraform reads every file → per project: resource group, Azure ML workspace,
+     identity, cluster, GitHub repo → plan → approval → apply
 ```
+
+Each project gets **its own resource group** (`rg-ml-<department>-<use_case>`,
+or an existing one) with everything inside: projects are fully separated.
 
 A use case file looks like this:
 
