@@ -59,7 +59,7 @@ body:
     id: department
     attributes:
       label: Department (→ registry department)
-      description: Lowercase, hyphens only. The department's Azure ML workspace is shared by its use cases.
+      description: Lowercase, hyphens only. Used in the project's names, e.g. rg-ml-manufacturing-tool-wear.
       placeholder: manufacturing
     validations:
       required: true

@@ -147,7 +147,7 @@ Phase 3: one resource group per ML project (decision 0001).
 16. `ml-infra-template` + `cdp-ml-onboarding`: per project resource group,
     workspace, identity, cluster, GitHub repo from one YAML file ✅
 17. Sandbox on the new registry (stays in the user's own resource group)
-18. Docs of every folder (AGENTS.md, checklists, request form, slide brief)
+18. Docs of every folder (AGENTS.md, checklists, request form) ✅; slide brief at the end
 
 ## How to work with me
 

@@ -16,12 +16,13 @@ and the approval gate in step 4); everything else is self-service.
 
 Trying an idea needs no request: a notebook on your laptop is fine. There is
 no shared "playground" workspace. Use only data you are already allowed to see,
-or public data. Open a request when the idea
-looks worth a real project, and tell us what you tried.
+or public data. Open a request when the idea looks worth a real project, and
+tell us what you tried.
 
 ## 1. Request
 
-*Issues → New issue → ML project request.* The form asks for the problem, how
+*Issues → New issue → ML project request* (later: the company's service
+portal, with the same questions). The form asks for the problem, how
 the predictions will be used, the data, an owner and a first guess of the risk
 tier. Don't worry about fields you can't fill in: the platform lead helps.
 The issue gets the label `new`.
@@ -53,11 +54,13 @@ or in a short call. The answer is one of:
 
 ## Setup (at the end of step 3)
 
-Only when the data and the priority are clear, so no repo or cluster waits
-empty (and costs nothing for nothing). The platform lead follows [setup-checklist.md](setup-checklist.md): one YAML
-file in the platform repo's ML registry, one project repo from the template,
-the IDs handed over. Then the label becomes `set-up` and the issue is closed
-with links to both.
+We set up a project only when the data and the priority are clear, so nothing
+sits empty and costs money. The platform lead writes **one YAML file** in the
+platform repo's ML registry ([setup-checklist.md](setup-checklist.md)). From
+that file the project gets its own resource group on Azure (with its own Azure
+ML workspace, identity and compute) and its own GitHub repo from the template,
+ready to run. Then the label becomes `set-up` and the issue is closed with
+links to both.
 
 ## 4 and 5. Build, run and review
 
@@ -77,6 +80,14 @@ it exists.
 | `deferred` | Not now (reason in a comment) |
 | `declined` | No (reason in a comment) |
 | `set-up` | Registry file merged and project repo created; issue closed |
+
+## Later: the service portal
+
+Today a request is a GitHub issue. The plan is to move the form to the
+company's service portal. Only the place changes: the questions stay the same
+(they are the fields of the registry file), and so do the steps and the
+decisions. Keep the form in `.github/ISSUE_TEMPLATE/` as the reference for the
+portal's form.
 
 ## Later: automation (not built)
 

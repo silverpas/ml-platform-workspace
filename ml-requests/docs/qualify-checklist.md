@@ -27,6 +27,8 @@ request issue and tick it together with the requester.
 **Fit**
 - [ ] CPU is enough, or the GPU need is real (deep learning) and GPU quota
       can be requested from Microsoft (each project gets its own cluster).
+- [ ] The value is worth the running cost: each project has its own resource
+      group and workspace, about 5-10 EUR per month plus compute.
 - [ ] Predictions can be scored in batch (e.g. nightly). Real-time answers
       are out of scope for now.
 - [ ] First review date agreed.

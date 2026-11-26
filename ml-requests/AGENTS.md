@@ -6,16 +6,19 @@ lead who handles the requests, and for their AI agents.
 ## What this repo is for
 
 The **front door** for new ML use cases. Someone with an idea opens a GitHub
-issue with the request form. The platform lead qualifies it and decides:
-approved, deferred or declined. An approved request becomes **one YAML file**
-in the platform repo's ML registry plus **one project repo** from the template.
+issue with the request form (later: the service portal, same questions). The
+platform lead qualifies it and decides: approved, deferred or declined. An
+approved request becomes **one YAML file** in the platform repo's ML registry.
+From it, the project gets its own resource group on Azure (with its own Azure
+ML workspace, identity and compute) and its own repo from the template.
 
 Jargon in one line each:
 - **Issue form**: a GitHub issue with fixed fields, like a web form.
 - **Label**: a coloured tag on an issue; here it shows the request's status.
 - **Risk tier**: how much harm a wrong prediction can do; it decides how strict the approval is.
 - **ML registry**: a folder of YAML files in the platform repo, one per use case;
-  the platform's Terraform reads them and sets up Azure.
+  the platform's Terraform reads them and sets up Azure and GitHub.
+- **Resource group**: a folder in Azure; each ML project gets its own.
 
 ## Where this repo sits in the overall process
 
@@ -43,7 +46,8 @@ docs/setup-checklist.md     end of step 3: form → registry YAML, project repo,
 Form fields marked **"→ registry"** use the same names and formats as the
 registry YAML (`registry/ml_use_cases/<department>__<use_case_id>.yaml`):
 `use_case_id`, `display_name`, `department`, `owner`, `risk_tier`, `reads`,
-`predictions_table`, `gpu`. `github_repo` is added at setup. The other fields
+`predictions_table`, `gpu`. `github_repo` and `reviewer_github_ids` are added
+at setup. The other fields
 (problem, usage, sponsor, sensitivity, review date, what was explored) are only
 for the decision. The mapping table is in `docs/setup-checklist.md`.
 
