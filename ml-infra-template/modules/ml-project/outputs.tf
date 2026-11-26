@@ -14,7 +14,7 @@ output "azure_tenant_id" {
 
 output "azure_subscription_id" {
   description = "GitHub variable AZURE_SUBSCRIPTION_ID."
-  value       = split("/", data.azurerm_machine_learning_workspace.department.id)[2]
+  value       = split("/", local.workspace_id)[2]
 }
 
 output "workspace_name" {

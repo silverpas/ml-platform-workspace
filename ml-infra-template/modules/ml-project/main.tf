@@ -8,16 +8,23 @@
 #   5. optionally, an Entra ID group for the team with the same permission.
 
 # The workspace already exists (created with the ml-workspace module).
-# "data" means: look it up, don't create it.
+# Best: pass its ID and region from ml-workspace's outputs (workspace_id,
+# location, lookup_workspace = false). Otherwise the module looks the workspace
+# up by name ("data" = read, don't create). Passing them avoids a trap: when the
+# workspace has any pending change, the lookup waits until apply, its region
+# becomes "unknown" and Terraform would replace the identity and cluster.
 data "azurerm_machine_learning_workspace" "department" {
+  count = var.lookup_workspace ? 1 : 0
+
   name                = var.workspace_name
   resource_group_name = var.workspace_resource_group_name
 }
 
 locals {
   # e.g. manufacturing-tool-wear, or manufacturing-tool-wear-dev with an environment
-  project_id = "${var.department}-${var.name}${var.environment == null ? "" : "-${var.environment}"}"
-  location   = data.azurerm_machine_learning_workspace.department.location
+  project_id   = "${var.department}-${var.name}${var.environment == null ? "" : "-${var.environment}"}"
+  workspace_id = var.lookup_workspace ? data.azurerm_machine_learning_workspace.department[0].id : var.workspace_id
+  location     = var.lookup_workspace ? data.azurerm_machine_learning_workspace.department[0].location : var.location
 
   # A name given in var.names wins; otherwise the default.
   names = {
@@ -92,7 +99,7 @@ resource "azurerm_federated_identity_credential" "github_deploy" {
 resource "azurerm_role_assignment" "workspace" {
   count = var.create_role_assignments ? 1 : 0
 
-  scope                = data.azurerm_machine_learning_workspace.department.id
+  scope                = local.workspace_id
   role_definition_name = "AzureML Data Scientist"
   principal_id         = azurerm_user_assigned_identity.project.principal_id
   principal_type       = "ServicePrincipal"
@@ -122,7 +129,7 @@ resource "azurerm_role_assignment" "registry" {
 resource "azurerm_machine_learning_compute_cluster" "project" {
   name                          = local.names.cluster
   location                      = local.location
-  machine_learning_workspace_id = data.azurerm_machine_learning_workspace.department.id
+  machine_learning_workspace_id = local.workspace_id
   vm_size                       = local.vm_size
   vm_priority                   = "Dedicated"
   tags                          = local.tags # use_case tag: costs per project in Cost Management
@@ -152,7 +159,7 @@ resource "azuread_group" "team" {
 resource "azurerm_role_assignment" "team" {
   count = var.create_team_group && var.create_role_assignments ? 1 : 0
 
-  scope                = data.azurerm_machine_learning_workspace.department.id
+  scope                = local.workspace_id
   role_definition_name = "AzureML Data Scientist"
   principal_id         = azuread_group.team[0].object_id
   principal_type       = "Group"

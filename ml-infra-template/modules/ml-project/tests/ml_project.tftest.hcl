@@ -324,3 +324,23 @@ run "no_github_login_rules_when_ml_project_github_makes_them" {
     error_message = "With create_github_login = false the GitHub login rules belong to ml-project-github."
   }
 }
+
+run "workspace_given_from_outside_is_not_looked_up" {
+  command = plan
+
+  variables {
+    lookup_workspace = false
+    workspace_id     = "/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/rg-ml-manufacturing-tool-wear/providers/Microsoft.MachineLearningServices/workspaces/mlw-manufacturing-tool-wear"
+    location         = "westeurope"
+  }
+
+  assert {
+    condition     = length(data.azurerm_machine_learning_workspace.department) == 0
+    error_message = "With lookup_workspace = false the workspace must not be looked up."
+  }
+
+  assert {
+    condition     = azurerm_machine_learning_compute_cluster.project.location == "westeurope" && azurerm_user_assigned_identity.project.location == "westeurope"
+    error_message = "Identity and cluster must use the given region."
+  }
+}

@@ -41,6 +41,7 @@ replaces the default names; anything left out keeps its default. The optional
 | `github_repo` | yes | `example-org/ml-tool-wear` |
 | `github_ids` | no (none) | `{ owner_id = 123, repo_id = 456 }`: only if GitHub's OIDC subject contains IDs (see below) |
 | `workspace_name` | yes | the project's workspace |
+| `lookup_workspace`, `workspace_id`, `location` | no (`true`, look up by name) | When ml-workspace runs in the same Terraform, set `lookup_workspace = false` and pass its `workspace_id` and `location` outputs: a change to the workspace then never forces Terraform to replace the identity and cluster |
 | `workspace_resource_group_name` | yes | its resource group |
 | `container_registry_id` | yes, unless `create_role_assignments = false` | ml-workspace output `container_registry_id` |
 | `gpu` | no (`false`) | `true` = a GPU cluster (needs GPU quota from Microsoft first) |

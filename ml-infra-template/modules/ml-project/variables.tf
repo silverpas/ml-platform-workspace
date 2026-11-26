@@ -90,6 +90,24 @@ variable "workspace_name" {
   type        = string
 }
 
+variable "lookup_workspace" {
+  description = "true (default) = look the workspace up by name. false (recommended when ml-workspace runs in the same Terraform) = use workspace_id and location instead, so a change to the workspace never forces Terraform to replace the identity and cluster."
+  type        = bool
+  default     = true
+}
+
+variable "workspace_id" {
+  description = "Full Azure ID of the workspace (ml-workspace output workspace_id). Used when lookup_workspace = false."
+  type        = string
+  default     = null
+}
+
+variable "location" {
+  description = "The workspace's Azure region (ml-workspace output location). Used when lookup_workspace = false."
+  type        = string
+  default     = null
+}
+
 variable "workspace_resource_group_name" {
   description = "Resource group of that workspace. The project identity is created here too."
   type        = string

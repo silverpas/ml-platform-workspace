@@ -97,6 +97,9 @@ module "ml_project" {
   create_github_login           = !var.manage_github
   github_ids                    = var.manage_github ? null : lookup(each.value, "github_ids", null)
   gpu                           = lookup(each.value, "gpu", false) # the project's own cluster: CPU or GPU
+  lookup_workspace              = false                            # ID and region come from ml_workspace directly
+  workspace_id                  = module.ml_workspace[each.key].workspace_id
+  location                      = module.ml_workspace[each.key].location
   container_registry_id         = module.ml_workspace[each.key].container_registry_id
   workspace_name                = module.ml_workspace[each.key].workspace_name
   workspace_resource_group_name = module.ml_workspace[each.key].resource_group_name
@@ -111,8 +114,6 @@ module "ml_project" {
     predictions_table = each.value.predictions_table
   })
 
-  # The workspace is created in the same apply: wait for it before looking it up.
-  depends_on = [module.ml_workspace]
 }
 
 # 4. The GitHub side: the repo (from the template), its five Azure variables,
