@@ -14,7 +14,7 @@ This module does **not** create the workspace. It comes from the
 | Resource | Why |
 |---|---|
 | User-assigned managed identity `id-ml-<department>-<name>` | The "robot account" the project's GitHub workflows and jobs run as |
-| 2 federated credentials (GitHub OIDC) | GitHub may log in as that identity **without any secret**, but only from this repo's `main` branch and its approval-gated environment |
+| 2 federated credentials (GitHub OIDC), unless `create_github_login = false` | GitHub may log in as that identity **without any secret**, but only from this repo's `main` branch and its approval-gated environment. With `ml-project-github` (the usual setup) that module creates them instead, with the repo's numeric IDs |
 | Compute cluster `cpu-<name>` (or `gpu-<name>`) | The project's own machines: run as the project identity (data access per project), tagged with `use_case` (costs per project), **scale to 0** when idle, at most `max_nodes` (default 1) |
 | Role assignment *AzureML Data Scientist* on the workspace | Submit jobs and register models; cannot change the workspace or compute |
 | Role assignment *AcrPull* on the workspace's container registry | The cluster loads the job environments with the project identity (the registry has no admin password) |

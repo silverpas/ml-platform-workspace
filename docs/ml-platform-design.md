@@ -71,12 +71,13 @@ when the data and the priority are clear, so no workspace or repo waits empty.
   resource group's bill is the project's cost.
 - **One compute cluster per project**, running as the project's own identity
   (which decides what data the project can reach). It scales to 0 nodes when idle.
-- **One GitHub repo per use case** *(proposed)*, created from the template repo.
+- **One GitHub repo per project** *(proposed)*, created from the template repo,
+  with its Azure variables, approval gate and login to Azure already set up.
 - **Metadata-driven onboarding** *(proposed)*: ordering a project = adding **one
-  YAML file** in the platform repo's ML registry, in a pull request, plus **one repo
-  from the template**. Nobody writes Terraform per use case: the platform's Terraform
-  reads every registry file and calls the shared modules for each one (plan, human
-  approval, apply). This follows the pattern data platforms often already use for
+  YAML file** in the platform repo's ML registry, in a pull request. Nobody
+  writes Terraform per project: the platform's Terraform reads every registry
+  file and builds, for each one, the resource group, the Azure resources and the
+  GitHub repo (plan, human approval, apply). This follows the pattern data platforms often already use for
   departments and data sources ("a new domain starts as one YAML file").
 
 ```
@@ -150,8 +151,8 @@ Four repos, each with an `AGENTS.md` for its users and their AI agents:
 | Repo | Purpose | Steps | Users |
 |---|---|---|---|
 | `ml-requests` | Request form (GitHub issue) and process | 1-3 | Requesters, platform lead |
-| `ml-infra-template` | Terraform modules `ml-workspace`, `ml-project` | 2-3 | Platform engineers |
-| `cdp-ml-onboarding` | Example of the platform repo's ML registry: YAML files, their schema, and the Terraform that reads them | 2-3 | Platform team, platform lead |
+| `ml-infra-template` | Terraform modules `ml-workspace`, `ml-project`, `ml-project-github` | 3 | Platform engineers |
+| `cdp-ml-onboarding` | Example of the platform repo's ML registry: YAML files, their schema, and the Terraform that reads them | 3 | Platform team, platform lead |
 | `ml-project-template` | Code template, one repo per use case | 4-5 | Model owner and team |
 
 ### 5.1 GitHub template repo (one repo per use case)
@@ -159,9 +160,11 @@ Four repos, each with an `AGENTS.md` for its users and their AI agents:
 ```
 ml-project-template/
 ├── README.md, AGENTS.md       # how to use this repo, for people and AI agents
+├── GUIDE.md                   # how to build a project; three ways to run the code
 ├── model-card.md              # owner, purpose, data version, metrics, approvals
 ├── config.yml                 # all settings
-├── src/                       # prep, train, evaluate, register, score
+├── src/                       # example code: data, prep, train, evaluate, register,
+│                              # export, score, cost
 ├── jobs/                      # Azure ML job definitions: train-register, batch-score
 ├── environment/conda.yml      # Python packages the jobs need
 ├── notebooks/                 # optional: scoring in Fabric (option A)
@@ -192,9 +195,10 @@ Notes:
 `ml-workspace`, **once per project**, in the project's resource group: Azure ML
 workspace with storage, key vault, container registry and Application Insights.
 
-`ml-project`, **once per use case**. Nobody calls it by hand: the platform repo's
-Terraform calls it once for every file in the ML registry. A use case is described
-by one YAML file, checked against a JSON schema:
+`ml-project` and `ml-project-github`, **once per project**. Nobody calls them by
+hand: the platform repo's Terraform calls the three modules once for every file
+in the ML registry. A project is described by one YAML file, checked against a
+JSON schema:
 
 ```yaml
 # registry/ml_use_cases/manufacturing__tool-wear.yaml
@@ -210,21 +214,20 @@ reads:
 predictions_table: ml_tool_wear_predictions   # Gold table, `ml_` prefix
 ```
 
-`ml-project-github`, **once per use case** (next to `ml-project`): the
-project's GitHub repo from the template, its five Azure variables, the
-approval-gated environment and the GitHub login rules. With it, one registry
-YAML file is all a new project needs; nothing is copied by hand.
-
 `ml-project` creates:
-- a compute cluster for this use case (CPU by default, GPU if `gpu: true`),
-  scaling to 0, running as the project's identity and tagged with the use case;
-- an Entra ID group with a limited data-scientist role on the department's
-  workspace (never Owner or Contributor);
-- the project's identity, used by the cluster and by this repo's GitHub
-  workflows (trusting only that repo);
+- the project's identity, used by its cluster and by its repo's GitHub workflows;
+- a compute cluster for the project (CPU by default, GPU if `gpu: true`),
+  scaling to 0 and running as the project's identity;
+- limited roles for that identity (*AzureML Data Scientist* on the workspace,
+  *AcrPull* on its container registry; never Owner or Contributor), and
+  optionally an Entra ID group for the team with the same role;
 - read access to the platform data, write access to the Gold `ml_` predictions
-  table (placeholders until the Fabric side is clear);
-- outputs: the IDs the project repo needs as GitHub variables.
+  table (placeholders until the Fabric side is clear).
+
+`ml-project-github` creates the project's GitHub repo from the template, its
+five Azure variables, the approval-gated environment, and the two login rules
+on the project's identity (trusting only that repo). With it, one registry
+YAML file is all a new project needs; nothing is copied by hand.
 
 GPU **quota** is a separate request to Microsoft; Terraform can only use it once granted.
 The module's exact design must follow how the platform team already structures Terraform.

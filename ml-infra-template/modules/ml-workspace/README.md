@@ -52,8 +52,9 @@ environments; it adds `-<environment>` to the default names and an
 
 - **Fixed while it exists:** about 5 EUR per month for the container registry,
   plus a few cents for storage, key vault and logs.
-- **Only when used:** the projects' clusters (see `ml-project`), per minute
+- **Only when used:** the project's cluster (see `ml-project`), per minute
   while a machine is on.
+- One workspace per project, so these costs are per project.
 - Never create a *compute instance* (a personal VM for notebooks) without
   auto-shutdown: it costs every hour it is on.
 

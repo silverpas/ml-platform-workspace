@@ -6,9 +6,10 @@ AI coding agents.
 ## What this repo is for
 
 An **example of the platform repo's ML registry**. Onboarding is
-**metadata-driven**: a new ML use case is one YAML file in a pull request.
-Terraform reads every file and calls the shared modules from
-`ml-infra-template` once per file. Nobody writes Terraform per use case.
+**metadata-driven**: a new ML project is one YAML file in a pull request.
+Terraform reads every file and, per file, creates the project's own resource
+group and calls the shared modules from `ml-infra-template` (workspace,
+identity and cluster, GitHub repo). Nobody writes Terraform per project.
 
 It is an **example**: copy the pattern into the real platform repo; do not
 apply it from here. If the platform already has a registry with a resolver
@@ -19,7 +20,7 @@ Jargon in one line each:
 - **JSON schema**: a file with the rules a YAML file must follow (fields, formats).
 - **Metadata-driven**: you describe *what* you want in a file; code does the *how*.
 - **`terraform plan`**: a dry run that lists what would be created or changed.
-- **Outputs**: values Terraform prints after apply (here: IDs for GitHub variables).
+- **Outputs**: values Terraform prints after apply (here: each project's resource group, repo link, cluster).
 
 ## Where this repo sits in the overall process
 

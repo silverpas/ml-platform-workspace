@@ -22,7 +22,8 @@ its own GitHub repo, so each one is self-contained.
  2. Qualify     platform lead checks it                         → "approved"
  3. Data        data access and priority agreed; at the end, the project setup:
                 └─ cdp-ml-onboarding: add one use case YAML (modules from ml-infra-template)
-                     → Azure: the project's cluster, identity and access
+                     → Azure: the project's own resource group with its workspace,
+                       identity, cluster and access
                      → GitHub: the project repo from ml-project-template, with its
                        Azure variables, approval gate and login rules
  4. Build       ml-project-template: train → evaluate → approval gate → champion → export
